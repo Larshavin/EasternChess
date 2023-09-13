@@ -5,10 +5,11 @@ import EasternChessMap from '@/components/EasternChessMap.vue'
 <template>
   <div class="flex flex-column justify-content-center align-items-center">
     <div>
-      장기 장기 프로젝트
+      장기
     </div>
     <!-- Eastern Chess Map displayed -->
-    <div class="" style="width: 900px; height: 1000px;">
+    <div class=" border-1 m-5"
+      style="width: 900px; height: 1000px; background-image: url('board.jpg');  background-size: cover;">
       <EasternChessMap />
     </div>
   </div>
