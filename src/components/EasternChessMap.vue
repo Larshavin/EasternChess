@@ -5,15 +5,13 @@
         <div v-for="j in 9" class="relative p-0 flex justify-content-center align-items-center"
             :style="{ 'height': size + 'px', 'width': size + 'px' }">
             <div v-if="board[i - 1][j - 1] != 0" class="z-4">
-                <!--                     
-                    :class="{ 'border-round border-3 border-green-300': isSelected(i - 1, j - 1) }" 
-                -->
-                <img :src="getPieceImageUrl(board[i - 1][j - 1])" class="z-4 cursor-pointer"
-                    :class="{ 'border-round border-3 border-green-300': isSelected(i - 1, j - 1) }"
-                    @click="pathFinding(i - 1, j - 1)" />
+                <img :src="getPieceImageUrl(board[i - 1][j - 1])" class="z-4 cursor-pointer" :class="{
+                    'border-round border-3 border-green-300': isSelected(i - 1, j - 1),
+                    'pointer-events-none': isOnTurn(i - 1, j - 1)
+                }" @click="pathFinding(i - 1, j - 1)" />
             </div>
             <div v-if="isMoveAvailable(i - 1, j - 1)"
-                class="border-circle w-2rem h-2rem bg-green-200 border-1 border-green-600 z-4 shadow-2 cursor-pointer"
+                class="absolute border-circle w-2rem h-2rem bg-green-200 border-1 border-green-600 z-5 shadow-2 cursor-pointer"
                 @click="move(i - 1, j - 1)">
             </div>
             <div class="z-0">
@@ -40,6 +38,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 
+const emit = defineEmits(['turn'])
+
 onMounted(() => {
     console.log("mounted")
     getInitialBoard('blue')
@@ -49,13 +49,13 @@ onMounted(() => {
 function getPieceImageUrl(num) {
 
     const pieceImages = {
-        1: `../assets/janggi_pieces/blue_chariot.svg`,
-        2: `../assets/janggi_pieces/blue_elephant.svg`,
-        3: `../assets/janggi_pieces/blue_horse.svg`,
-        4: `../assets/janggi_pieces/blue_cannon.svg`,
-        5: `../assets/janggi_pieces/blue_king.svg`,
-        6: `../assets/janggi_pieces/blue_advisor.svg`,
-        7: `../assets/janggi_pieces/blue_pawn.svg`,
+        9: `../assets/janggi_pieces/blue_chariot.svg`,
+        10: `../assets/janggi_pieces/blue_elephant.svg`,
+        11: `../assets/janggi_pieces/blue_horse.svg`,
+        12: `../assets/janggi_pieces/blue_cannon.svg`,
+        13: `../assets/janggi_pieces/blue_king.svg`,
+        14: `../assets/janggi_pieces/blue_advisor.svg`,
+        15: `../assets/janggi_pieces/blue_pawn.svg`,
         17: `../assets/janggi_pieces/red_chariot.svg`,
         18: `../assets/janggi_pieces/red_elephant.svg`,
         19: `../assets/janggi_pieces/red_horse.svg`,
@@ -129,10 +129,24 @@ const getInitialBoard = (color) => {
                     }
                 }
             }
+            if (i >= 6) {
+                for (var j in board.value[i]) {
+                    if (board.value[i][j] != 0) {
+                        board.value[i][j] += 8
+                    }
+                }
+            }
         }
     }
     else {
         for (var i in board.value) {
+            if (i <= 3) {
+                for (var j in board.value[i]) {
+                    if (board.value[i][j] != 0) {
+                        board.value[i][j] += 8
+                    }
+                }
+            }
             if (i >= 6) {
                 for (var j in board.value[i]) {
                     if (board.value[i][j] != 0) {
@@ -159,6 +173,26 @@ const isSelected = (i, j) => {
     }
 }
 
+const turn = ref(8) // blue: 8, red: 16
+const isOnTurn = (i, j) => {
+    if (turn.value == 8) {
+        if (board.value[i][j] < 16) {
+            return false // no 'pointer-events: none;' in css
+        }
+        else {
+            return true
+        }
+    }
+    else {
+        if (board.value[i][j] > 16) {
+            return false
+        }
+        else {
+            return true
+        }
+    }
+}
+
 const availableMoves = ref(null)
 const isMoveAvailable = (i, j) => {
     if (availableMoves.value == null) {
@@ -176,6 +210,8 @@ const isMoveAvailable = (i, j) => {
 
 
 const pathFinding = (i, j) => {
+    var delta
+    availableMoves.value = null
     // console.log(board.value[i][j])
     const num = board.value[i][j]
 
@@ -189,20 +225,21 @@ const pathFinding = (i, j) => {
     seletedPiece.value = [i, j]
 
     switch (num) {
-        case 1: // 초나라 차
+        case 9: // 초나라 차
             return
-        case 2: // 초나라 상
+        case 10: // 초나라 상
             return
-        case 3: // 초나라 마
+        case 11: // 초나라 마
             return
-        case 4: // 초나라 포
+        case 12: // 초나라 포
             return
-        case 5: // 초나라 왕
+        case 13: // 초나라 왕
             return
-        case 6: // 초나라 사
+        case 14: // 초나라 사
             return
-        case 7: // 초나라 졸
-            getPawnMovement(i, j)
+        case 15: // 초나라 졸
+            delta = [[0, -1], [-1, 0], [0, 1]]
+            getPawnMovement(i, j, delta)
             return
         case 17: // 한나라 차
             return
@@ -217,6 +254,8 @@ const pathFinding = (i, j) => {
         case 22: // 한나라 사
             return
         case 23: // 한나라 병
+            delta = [[0, -1], [1, 0], [0, 1]]
+            getPawnMovement(i, j, delta)
             return
         default:
             return
@@ -226,12 +265,13 @@ const pathFinding = (i, j) => {
 const move = (row, column) => {
     board.value[row][column] = board.value[seletedPiece.value[0]][seletedPiece.value[1]]
     board.value[seletedPiece.value[0]][seletedPiece.value[1]] = 0
+    turn.value = turn.value == 8 ? 16 : 8
+    emit('turn', turn.value)
     seletedPiece.value = null
     availableMoves.value = null
 }
 
-const getPawnMovement = (i, j) => {
-    const delta = [[0, -1], [-1, 0], [0, 1]]
+const getPawnMovement = (i, j, delta) => {
     availableMoves.value = []
     for (const d in delta) {
         const row = i + delta[d][0]
@@ -240,11 +280,11 @@ const getPawnMovement = (i, j) => {
         if (row < 0 || row > 9 || column < 0 || column > 8) {
             continue
         }
-        if (board.value[row][column] == 0) {
+        if (board.value[row][column] == 0 || compareBitsAtPosition(board.value[row][column], board.value[i][j], 5)) {
             availableMoves.value.push([row, column])
         }
     }
-    console.log([i, j], availableMoves.value)
+    // console.log([i, j], availableMoves.value)
 }
 
 const getKingMovement = (i, j) => {
@@ -271,6 +311,15 @@ const getCannonMovement = (i, j) => {
 
 }
 
+
+function compareBitsAtPosition(num1, num2, position) {
+    // Convert numbers to binary strings with leading zeros
+    const binary1 = num1.toString(2).padStart(position, '0');
+    const binary2 = num2.toString(2).padStart(position, '0');
+    console.log(binary1, binary2)
+    // Check if the bits at the specified position are the same
+    return binary1[0] !== binary2[0];
+}
 
 </script>
 
