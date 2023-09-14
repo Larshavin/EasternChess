@@ -230,6 +230,8 @@ const pathFinding = (i, j) => {
         case 10: // 초나라 상
             return
         case 11: // 초나라 마
+            delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
+            getHorseMovement(i, j, delta)
             return
         case 12: // 초나라 포
             return
@@ -246,6 +248,8 @@ const pathFinding = (i, j) => {
         case 18: // 한나라 상
             return
         case 19: // 한나라 마
+            delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
+            getHorseMovement(i, j, delta)
             return
         case 20: // 한나라 포
             return
@@ -295,8 +299,39 @@ const getAdvisorMovement = (i, j) => {
 
 }
 
-const getHorseMovement = (i, j) => {
+const getHorseMovement = (i, j, delta) => {
+    availableMoves.value = []
+    for (const d in delta) {
+        const row = i + delta[d][0]
+        const column = j + delta[d][1]
+        // console.log(board.value[column][row])
+        if (row < 0 || row > 9 || column < 0 || column > 8) {
+            continue
+        }
+        if (board.value[row][column] == 0) {
+            var newDelta = []
+            if (delta[d][0] == 0) {
+                newDelta = [[1, delta[d][1]], [-1, delta[d][1]]]
+            }
+            else {
+                newDelta = [[delta[d][0], 1], [delta[d][0], -1]]
+            }
+            // availableMoves.value.push([row, column])
+            for (const nd in newDelta) {
+                var newRow = row + newDelta[nd][0]
+                var newColumn = column + newDelta[nd][1]
+                console.log(delta[d], newDelta)
 
+                if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
+                    continue
+                }
+                if (board.value[newRow][newColumn] == 0 || compareBitsAtPosition(board.value[newRow][newColumn], board.value[i][j], 5)) {
+                    availableMoves.value.push([newRow, newColumn])
+                }
+            }
+        }
+    }
+    // console.log([i, j], availableMoves.value
 }
 
 const getElephantMovement = (i, j) => {
