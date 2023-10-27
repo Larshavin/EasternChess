@@ -1,6 +1,6 @@
 <template>
     <!-- row : 행 10줄 : 1부터 시작 -->
-    <div v-for="i in 10" class="flex">
+    <div v-for="i in 10" class="flex not_draggable" @contextmenu.prevent>
         <!-- column : 열 9줄 : 1부터 시작 -->
         <div v-for="j in 9" class="relative p-0 flex justify-content-center align-items-center"
             :style="{ 'height': size + 'px', 'width': size + 'px' }">
@@ -45,7 +45,7 @@ const emit = defineEmits(['turn', 'died'])
 
 onMounted(() => {
     //console.log("mounted")
-    getInitialBoard('red')
+    getInitialBoard('blue')
     // //console.log(board.value[0][0])
 })
 
@@ -654,6 +654,20 @@ function compareBitsAtPosition(num1, num2, position) {
 </script>
 
 <style scoped>
+.not_draggable {
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+}
+
+
 .diagonalLine {
     position: absolute;
     top: 50%;
