@@ -3,6 +3,10 @@ import { ref } from 'vue'
 import EasternChessMap from '@/components/EasternChessMap.vue'
 const turn = ref('초나라')
 
+const height_size = ref(600)
+const width_size = ref(height_size.value * 0.9)
+const size = ref(height_size.value * 0.1)
+
 const pieces = ref(
   {
     0: null,
@@ -74,9 +78,9 @@ const getDiedPiece = (n) => {
     <!-- Korean Chess Map displayed -->
     <!-- 장기판 이미지 로딩 속도 느린 이슈 있음 -->
     <!-- background-image: url('board.jpg'); -->
-    <div class=" border-1 m-5 overflow-hidden"
-      style="width: 900px; height: 1000px; background-image: url('board.jpeg'); background-size: cover;">
-      <EasternChessMap @turn="(n) => turnChange(n)" @died="(n) => getDiedPiece(n)" />
+    <div class=" border-1 m-5 overflow-hidden" style="background-image: url('board.jpeg'); background-size: cover;"
+      :style="{ 'width': width_size + 'px', 'height': height_size + 'px' }">
+      <EasternChessMap @turn="(n) => turnChange(n)" @died="(n) => getDiedPiece(n)" :size="size" />
     </div>
     <div>
       <div class="flex justify-content-center m-4">

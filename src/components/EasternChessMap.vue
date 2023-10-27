@@ -10,12 +10,13 @@
                     'border-round border-3 border-green-300': isSelected(i - 1, j - 1),
                     'border-round border-3 border-red-300': isLastMovde(i - 1, j - 1),
                     'pointer-events-none': isOnTurn(i - 1, j - 1)
-                }" @click="pathFinding(i - 1, j - 1)" />
+                }" :style="{ 'height': size * 0.9 + 'px', 'width': size * 0.9 + 'px' }"
+                    @click="pathFinding(i - 1, j - 1)" />
             </div>
             <!-- 움직일 수 있는 경로 선택 -->
             <div v-if="isMoveAvailable(i - 1, j - 1)"
-                class="absolute border-circle w-2rem h-2rem bg-green-200 border-1 border-green-600 z-5 shadow-2 cursor-pointer"
-                @click="move(i - 1, j - 1)">
+                class="absolute border-circle bg-green-200 border-1 border-green-600 z-5 shadow-2 cursor-pointer"
+                :style="{ 'height': size / 4 + 'px', 'width': size / 4 + 'px' }" @click="move(i - 1, j - 1)">
             </div>
             <!-- 장기판 꾸미기 : 선, 대각선, 엑스표 -->
             <div class="z-0">
@@ -42,9 +43,13 @@
 import { ref, onMounted } from 'vue'
 
 const emit = defineEmits(['turn', 'died'])
+const props = defineProps(['size'])
+const size = ref(props.size)
+const sizePixel = size.value * 2 + 'px'
 
 onMounted(() => {
     //console.log("mounted")
+
     getInitialBoard('blue')
     // //console.log(board.value[0][0])
 })
@@ -70,8 +75,6 @@ function getPieceImageUrl(num) {
 
     return new URL(pieceImages[num], import.meta.url).href;
 }
-
-const size = ref(100)
 
 // 엑스표 위치
 const cross_position = (i, j) => {
@@ -714,11 +717,12 @@ function compareBitsAtPosition(num1, num2, position) {
 .bigCross:before,
 .bigCross:after {
     --sqrt2: 1.4142135623730951;
+    --size: v-bind(sizePixel);
     position: absolute;
     right: 0%;
-    top: calc(200px * -0.5 * var(--sqrt2));
+    top: calc(var(--size) * -0.5 * var(--sqrt2));
     content: '';
-    height: calc(200px * var(--sqrt2));
+    height: calc(var(--size) * var(--sqrt2));
     width: 1px;
     background-color: black;
 }
