@@ -74,7 +74,8 @@ const getDiedPiece = (n) => {
     <!-- Korean Chess Map displayed -->
     <!-- 장기판 이미지 로딩 속도 느린 이슈 있음 -->
     <!-- background-image: url('board.jpg'); -->
-    <div class=" border-1 m-5" style="width: 900px; height: 1000px;   background-size: cover;">
+    <div class=" border-1 m-5 overflow-hidden"
+      style="width: 900px; height: 1000px; background-image: url('board.jpeg'); background-size: cover;">
       <EasternChessMap @turn="(n) => turnChange(n)" @died="(n) => getDiedPiece(n)" />
     </div>
     <div>
