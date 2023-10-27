@@ -40,11 +40,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 
-const emit = defineEmits(['turn'])
+const emit = defineEmits(['turn', 'died'])
 
 onMounted(() => {
     console.log("mounted")
-    getInitialBoard('blue')
+    getInitialBoard('red')
     // console.log(board.value[0][0])
 })
 
@@ -125,9 +125,25 @@ const board = ref(
     ]
 )
 
+const palacePostionDelta = {
+    '[0,3]': [[1, 1]],
+    '[0,5]': [[1, -1]],
+    '[1,4]': [[1, 1], [1, -1], [-1, 1], [-1, -1]],
+    '[2,3]': [[-1, 1]],
+    '[2,5]': [[-1, -1]],
+    '[7,3]': [[1, 1]],
+    '[7,5]': [[1, -1]],
+    '[8,4]': [[1, 1], [1, -1], [-1, 1], [-1, -1]],
+    '[9,3]': [[-1, 1]],
+    '[9,5]': [[-1, -1]]
+}
+
+var mySide = null
+
 // 진영 결정에 따른 기물 정보 변경 : 초나라 +8, 한나라 +16
 const getInitialBoard = (color) => {
     if (color == "blue") {
+        mySide = 8
         for (var i in board.value) {
             if (i <= 3) {
                 for (var j in board.value[i]) {
@@ -146,6 +162,7 @@ const getInitialBoard = (color) => {
         }
     }
     else {
+        mySide = 16
         for (var i in board.value) {
             if (i <= 3) {
                 for (var j in board.value[i]) {
@@ -261,9 +278,15 @@ const pathFinding = (i, j) => {
             getKingMovement(i, j, delta)
             return
         case 14: // 초나라 사
+            delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
+            getAdvisorMovement(i, j, delta)
             return
         case 15: // 초나라 졸
-            delta = [[0, -1], [-1, 0], [0, 1]]
+            if (mySide == 8) {
+                delta = [[0, -1], [-1, 0], [0, 1]]
+            } else {
+                delta = [[0, -1], [1, 0], [0, 1]]
+            }
             getPawnMovement(i, j, delta)
             return
         case 17: // 한나라 차
@@ -287,9 +310,15 @@ const pathFinding = (i, j) => {
             getKingMovement(i, j, delta)
             return
         case 22: // 한나라 사
+            delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
+            getAdvisorMovement(i, j, delta)
             return
         case 23: // 한나라 병
-            delta = [[0, -1], [1, 0], [0, 1]]
+            if (mySide == 16) {
+                delta = [[0, -1], [-1, 0], [0, 1]]
+            } else {
+                delta = [[0, -1], [1, 0], [0, 1]]
+            }
             getPawnMovement(i, j, delta)
             return
         default:
@@ -299,6 +328,9 @@ const pathFinding = (i, j) => {
 
 // 선택한 기물을 선택한 좌표로 이동
 const move = (row, column) => {
+    if (board.value[row][column] != 0) {
+        emit('died', board.value[row][column])
+    }
     board.value[row][column] = board.value[seletedPiece.value[0]][seletedPiece.value[1]]
     board.value[seletedPiece.value[0]][seletedPiece.value[1]] = 0
     turn.value = turn.value == 8 ? 16 : 8
@@ -310,6 +342,22 @@ const move = (row, column) => {
 // 졸병의 움직임 계산
 const getPawnMovement = (i, j, delta) => {
     availableMoves.value = []
+
+    const key = '[' + i + ',' + j + ']'
+    if (palacePostionDelta[key] != undefined) {
+        const palacePostion = palacePostionDelta[key]
+        // add palacePostion's Deleta value in delta
+        for (const p in palacePostion) {
+            if (turn.value == mySide && palacePostion[p][0] == 1) {
+                continue
+            } else if (turn.value != mySide && palacePostion[p][0] == -1) {
+                continue
+            } else {
+                delta.push(palacePostion[p])
+            }
+        }
+    }
+
     for (const d in delta) {
         const row = i + delta[d][0]
         const column = j + delta[d][1]
@@ -326,12 +374,31 @@ const getPawnMovement = (i, j, delta) => {
 
 // 왕의 움직임 계산 - 미완성
 const getKingMovement = (i, j, delta) => {
+    movingInPalace(i, j, delta)
+}
+
+// 사의 움직임 계산
+const getAdvisorMovement = (i, j, delta) => {
+    movingInPalace(i, j, delta)
+}
+
+// 궁 안에서 움직이는 왕과 사의 기본적인 움직임
+const movingInPalace = (i, j, delta) => {
     availableMoves.value = []
+    const key = '[' + i + ',' + j + ']'
+    const palacePostion = palacePostionDelta[key]
+
+    for (const p in palacePostion) {
+        delta.push(palacePostion[p])
+    }
+
     for (const d in delta) {
         const row = i + delta[d][0]
         const column = j + delta[d][1]
-        // console.log(board.value[column][row])
-        if (row < 0 || row > 9 || column < 0 || column > 8) {
+        if ((turn.value == mySide) && (row < 7 || row > 9 || column < 3 || column > 5)) {
+            continue
+        }
+        if ((turn.value != mySide) && (row < 0 || row > 2 || column < 3 || column > 5)) {
             continue
         }
         if (board.value[row][column] == 0 || compareBitsAtPosition(board.value[row][column], board.value[i][j], 5)) {
@@ -340,10 +407,6 @@ const getKingMovement = (i, j, delta) => {
     }
 }
 
-// 사의 움직임 계산 - 미완성
-const getAdvisorMovement = (i, j) => {
-
-}
 
 // 마의 움직임 계산
 const getHorseMovement = (i, j, delta) => {
@@ -428,6 +491,19 @@ const getElephantMovement = (i, j, delta) => {
 const getChariotMovement = (i, j, delta) => {
     availableMoves.value = []
     var initial = board.value[i][j]
+
+    // 위치가 궁 안 인지 확인한 후에 dt 값을 시작지점에 따라 변경.
+    // 추가된 dt 값은 궁 안에서만 움직일 수 있도록 함.
+    const key = '[' + i + ',' + j + ']'
+    if (palacePostionDelta[key] != undefined) {
+        const palacePostion = palacePostionDelta[key]
+        // add palacePostion's Deleta value in delta
+        for (const p in palacePostion) {
+            delta.push(palacePostion[p])
+        }
+    }
+
+
     for (const d in delta) {
         forwarding(i, j, delta[d], initial)
     }
@@ -443,6 +519,13 @@ const forwarding = (i, j, delta, initial) => {
     if (row < 0 || row > 9 || column < 0 || column > 8) {
         return
     }
+
+    // 델타 값이 x, y 축 모두 0이 아니라면 이는 궁 안에서 가질 수 있는 움직임이다. 
+    // 만약 다음 경로 값이 궁 밖을 벗어난다면, 이 경로와 그 이후는 고려하지 않는다.
+    if ((delta[0] != 0 && delta[1] != 0) && (row < 0 || row > 2 || column < 3 || column > 5) && (row < 7 || row > 9 || column < 3 || column > 5)) {
+        return
+    }
+
     if (board.value[row][column] == 0) {
         availableMoves.value.push([row, column])
         forwarding(row, column, delta, initial)
@@ -458,6 +541,15 @@ const forwarding = (i, j, delta, initial) => {
 const getCannonMovement = (i, j, delta) => {
     availableMoves.value = []
     var initial = board.value[i][j]
+
+    const key = '[' + i + ',' + j + ']'
+    if (palacePostionDelta[key] != undefined) {
+        const palacePostion = palacePostionDelta[key]
+        for (const p in palacePostion) {
+            delta.push(palacePostion[p])
+        }
+    }
+
     for (const d in delta) {
         beforeJump.value = []
         const check = checkBlock(i, j, delta[d])
@@ -477,6 +569,10 @@ const checkBlock = (i, j, delta) => {
     const column = j + delta[1]
     console.log("test", row, column)
     if (row < 0 || row > 9 || column < 0 || column > 8) {
+        return false
+    }
+
+    if ((delta[0] != 0 && delta[1] != 0) && (row < 0 || row > 2 || column < 3 || column > 5) && (row < 7 || row > 9 || column < 3 || column > 5)) {
         return false
     }
 
@@ -503,6 +599,10 @@ const jumping = (i, j, delta, initial) => {
     if (row < 0 || row > 9 || column < 0 || column > 8) {
         return
     }
+    if ((delta[0] != 0 && delta[1] != 0) && (row < 0 || row > 2 || column < 3 || column > 5) && (row < 7 || row > 9 || column < 3 || column > 5)) {
+        return
+    }
+
     if (board.value[row][column] == 0) {
         availableMoves.value.push([row, column])
         jumping(row, column, delta, initial)
