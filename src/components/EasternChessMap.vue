@@ -1,19 +1,22 @@
 <template>
-    <!-- row -->
+    <!-- row : 행 10줄 : 1부터 시작 -->
     <div v-for="i in 10" class="flex">
-        <!-- column -->
+        <!-- column : 열 9줄 : 1부터 시작 -->
         <div v-for="j in 9" class="relative p-0 flex justify-content-center align-items-center"
             :style="{ 'height': size + 'px', 'width': size + 'px' }">
+            <!-- 실제 기물의 위치 -->
             <div v-if="board[i - 1][j - 1] != 0" class="z-4">
                 <img :src="getPieceImageUrl(board[i - 1][j - 1])" class="z-4 cursor-pointer" :class="{
                     'border-round border-3 border-green-300': isSelected(i - 1, j - 1),
                     'pointer-events-none': isOnTurn(i - 1, j - 1)
                 }" @click="pathFinding(i - 1, j - 1)" />
             </div>
+            <!-- 움직일 수 있는 경로 선택 -->
             <div v-if="isMoveAvailable(i - 1, j - 1)"
                 class="absolute border-circle w-2rem h-2rem bg-green-200 border-1 border-green-600 z-5 shadow-2 cursor-pointer"
                 @click="move(i - 1, j - 1)">
             </div>
+            <!-- 장기판 꾸미기 : 선, 대각선, 엑스표 -->
             <div class="z-0">
                 <div v-if="i != 1" class="absolute top-0 left-0 border-right-1 m-0 p-0 "
                     :style="{ 'height': (size / 2) + 'px', 'width': (size / 2) - 1 + 'px' }">
@@ -29,7 +32,6 @@
                 </div>
                 <div v-if="cross_position(j, i)" class="absolute cross"></div>
                 <div v-if="(j == 5 && i == 2) || (j == 5 && i == 9)" class="absolute bigCross" style="height: 50px;"></div>
-                <!-- Real pieces placed -->
             </div>
         </div>
     </div>
@@ -46,8 +48,8 @@ onMounted(() => {
     // console.log(board.value[0][0])
 })
 
+// 기물 이미지 가져오기
 function getPieceImageUrl(num) {
-
     const pieceImages = {
         9: `../assets/janggi_pieces/blue_chariot.svg`,
         10: `../assets/janggi_pieces/blue_elephant.svg`,
@@ -69,6 +71,8 @@ function getPieceImageUrl(num) {
 }
 
 const size = ref(100)
+
+// 엑스표 위치
 const cross_position = (i, j) => {
 
     const list = [[2, 3], [8, 3], [2, 8], [8, 8], [1, 4], [3, 4], [5, 4], [7, 4], [9, 4], [1, 7], [3, 7], [5, 7], [7, 7], [9, 7]]
@@ -81,6 +85,7 @@ const cross_position = (i, j) => {
     return false
 }
 
+// 기물 종류
 const pieces = ref(
     {
         0: null,
@@ -104,9 +109,10 @@ const pieces = ref(
 //     return pieces.value[num]
 // }
 
+// 장기판 초기 상태 : 추후에 마상상마, 마상마상, 상마상마, 상마마상 선택 가능하도록 변경
 const board = ref(
     [
-        [1, 3, 2, 6, 0, 6, 2, 3, 1],
+        [1, 3, 2, 6, 0, 6, 3, 2, 1],
         [0, 0, 0, 0, 5, 0, 0, 0, 0],
         [0, 4, 0, 0, 0, 0, 0, 4, 0],
         [7, 0, 7, 0, 7, 0, 7, 0, 7],
@@ -119,6 +125,7 @@ const board = ref(
     ]
 )
 
+// 진영 결정에 따른 기물 정보 변경 : 초나라 +8, 한나라 +16
 const getInitialBoard = (color) => {
     if (color == "blue") {
         for (var i in board.value) {
@@ -159,8 +166,10 @@ const getInitialBoard = (color) => {
     // console.log(board.value)
 }
 
+// 선택 된 기물
 const seletedPiece = ref(null)
 
+// 좌표 위치의 기물이 선택 되었는지 확인
 const isSelected = (i, j) => {
     if (seletedPiece.value == null) {
         return false
@@ -173,7 +182,10 @@ const isSelected = (i, j) => {
     }
 }
 
-const turn = ref(8) // blue: 8, red: 16
+// 플레이 턴 : 초나라 8, 한나라 16
+const turn = ref(8)
+
+// 선택한 위치의 기물이 턴에 맞는지 확인
 const isOnTurn = (i, j) => {
     if (turn.value == 8) {
         if (board.value[i][j] < 16) {
@@ -193,7 +205,10 @@ const isOnTurn = (i, j) => {
     }
 }
 
+// 선택한 기물의 움직일 수 있는 경로
 const availableMoves = ref(null)
+
+// 선택한 기물의 움직일 수 있는 경로 확인
 const isMoveAvailable = (i, j) => {
     if (availableMoves.value == null) {
         return false
@@ -208,7 +223,7 @@ const isMoveAvailable = (i, j) => {
     }
 }
 
-
+// 장기판 위의 좌표값을 확인하며 선택한 기물의 경로를 계산 
 const pathFinding = (i, j) => {
     var delta
     availableMoves.value = null
@@ -226,16 +241,24 @@ const pathFinding = (i, j) => {
 
     switch (num) {
         case 9: // 초나라 차
+            delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
+            getChariotMovement(i, j, delta)
             return
         case 10: // 초나라 상
+            delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
+            getElephantMovement(i, j, delta)
             return
         case 11: // 초나라 마
             delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
             getHorseMovement(i, j, delta)
             return
         case 12: // 초나라 포
+            delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
+            getCannonMovement(i, j, delta)
             return
         case 13: // 초나라 왕
+            delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
+            getKingMovement(i, j, delta)
             return
         case 14: // 초나라 사
             return
@@ -244,16 +267,24 @@ const pathFinding = (i, j) => {
             getPawnMovement(i, j, delta)
             return
         case 17: // 한나라 차
+            delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
+            getChariotMovement(i, j, delta)
             return
         case 18: // 한나라 상
+            delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
+            getElephantMovement(i, j, delta)
             return
         case 19: // 한나라 마
             delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
             getHorseMovement(i, j, delta)
             return
         case 20: // 한나라 포
+            delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
+            getCannonMovement(i, j, delta)
             return
         case 21: // 한나라 왕
+            delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
+            getKingMovement(i, j, delta)
             return
         case 22: // 한나라 사
             return
@@ -266,6 +297,7 @@ const pathFinding = (i, j) => {
     }
 }
 
+// 선택한 기물을 선택한 좌표로 이동
 const move = (row, column) => {
     board.value[row][column] = board.value[seletedPiece.value[0]][seletedPiece.value[1]]
     board.value[seletedPiece.value[0]][seletedPiece.value[1]] = 0
@@ -275,6 +307,7 @@ const move = (row, column) => {
     availableMoves.value = null
 }
 
+// 졸병의 움직임 계산
 const getPawnMovement = (i, j, delta) => {
     availableMoves.value = []
     for (const d in delta) {
@@ -291,14 +324,28 @@ const getPawnMovement = (i, j, delta) => {
     // console.log([i, j], availableMoves.value)
 }
 
-const getKingMovement = (i, j) => {
-
+// 왕의 움직임 계산 - 미완성
+const getKingMovement = (i, j, delta) => {
+    availableMoves.value = []
+    for (const d in delta) {
+        const row = i + delta[d][0]
+        const column = j + delta[d][1]
+        // console.log(board.value[column][row])
+        if (row < 0 || row > 9 || column < 0 || column > 8) {
+            continue
+        }
+        if (board.value[row][column] == 0 || compareBitsAtPosition(board.value[row][column], board.value[i][j], 5)) {
+            availableMoves.value.push([row, column])
+        }
+    }
 }
 
+// 사의 움직임 계산 - 미완성
 const getAdvisorMovement = (i, j) => {
 
 }
 
+// 마의 움직임 계산
 const getHorseMovement = (i, j, delta) => {
     availableMoves.value = []
     for (const d in delta) {
@@ -331,22 +378,143 @@ const getHorseMovement = (i, j, delta) => {
             }
         }
     }
-    // console.log([i, j], availableMoves.value
 }
 
-const getElephantMovement = (i, j) => {
+// 상의 움직임 계산
+const getElephantMovement = (i, j, delta) => {
+    availableMoves.value = []
+    for (const d in delta) {
+        const row = i + delta[d][0]
+        const column = j + delta[d][1]
+        if (row < 0 || row > 9 || column < 0 || column > 8) {
+            continue
+        }
+        if (board.value[row][column] == 0) {
+            var newDelta = []
+            if (delta[d][0] == 0) {
+                newDelta = [[1, delta[d][1]], [-1, delta[d][1]]]
+            }
+            else {
+                newDelta = [[delta[d][0], 1], [delta[d][0], -1]]
+            }
 
+            for (const nd in newDelta) {
+                const newRow = row + newDelta[nd][0]
+                const newColumn = column + newDelta[nd][1]
+                console.log(delta[d], newDelta)
+
+                if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
+                    continue
+                }
+                if (board.value[newRow][newColumn] == 0) {
+                    for (const ld in newDelta) {
+                        const lastRow = newRow + newDelta[nd][0]
+                        const lastColumn = newColumn + newDelta[nd][1]
+
+                        if (lastRow < 0 || lastRow > 9 || lastColumn < 0 || lastColumn > 8) {
+                            continue
+                        }
+                        if (board.value[lastRow][lastColumn] == 0 || compareBitsAtPosition(board.value[lastRow][lastColumn], board.value[i][j], 5)) {
+                            availableMoves.value.push([lastRow, lastColumn])
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
-const getChariotMovement = (i, j) => {
-
+// 차의 움직임 계산
+const getChariotMovement = (i, j, delta) => {
+    availableMoves.value = []
+    var initial = board.value[i][j]
+    for (const d in delta) {
+        forwarding(i, j, delta[d], initial)
+    }
 }
 
-const getCannonMovement = (i, j) => {
+// 전진 확인 위한 재귀 함수
+const forwarding = (i, j, delta, initial) => {
+    //console.log('here', i, j, board.value[i][j])
 
+    const row = i + delta[0]
+    const column = j + delta[1]
+
+    if (row < 0 || row > 9 || column < 0 || column > 8) {
+        return
+    }
+    if (board.value[row][column] == 0) {
+        availableMoves.value.push([row, column])
+        forwarding(row, column, delta, initial)
+    }
+    else if (compareBitsAtPosition(board.value[row][column], initial, 5)) {
+        //console.log(board.value[row][column], board.value[i][j])
+        availableMoves.value.push([row, column])
+    }
+    return
 }
 
+// 포의 움직임 계산
+const getCannonMovement = (i, j, delta) => {
+    availableMoves.value = []
+    var initial = board.value[i][j]
+    for (const d in delta) {
+        beforeJump.value = []
+        const check = checkBlock(i, j, delta[d])
+        console.log(check)
+        if (check) {
+            jumping(beforeJump.value[0], beforeJump.value[1], delta[d], initial)
+        }
+    }
+}
 
+// 
+const beforeJump = ref([])
+
+// 포의 점프 가능 여부 확인 : 막는 경로가 있으면 점프 가능
+const checkBlock = (i, j, delta) => {
+    const row = i + delta[0]
+    const column = j + delta[1]
+    console.log("test", row, column)
+    if (row < 0 || row > 9 || column < 0 || column > 8) {
+        return false
+    }
+
+    if (board.value[row][column] == 0) {
+        const check = checkBlock(row, column, delta)
+        if (check) {
+            console.log(check)
+            return true
+        }
+        return false
+    }
+    else if (board.value[row][column] != 0 && board.value[row][column] != 12 && board.value[row][column] != 20) {
+        beforeJump.value = [row, column]
+        return true
+    }
+}
+
+// 포의 점프 확인 위한 재귀 함수
+const jumping = (i, j, delta, initial) => {
+    console.log('jump', i, j)
+    const row = i + delta[0]
+    const column = j + delta[1]
+
+    if (row < 0 || row > 9 || column < 0 || column > 8) {
+        return
+    }
+    if (board.value[row][column] == 0) {
+        availableMoves.value.push([row, column])
+        jumping(row, column, delta, initial)
+    }
+    else if (compareBitsAtPosition(board.value[row][column], initial, 5) && board.value[row][column] != 12 && board.value[row][column] != 20) {
+        //console.log(board.value[row][column], board.value[i][j])
+        availableMoves.value.push([row, column])
+    }
+    return
+}
+
+// 피아 식별을 위한 계산 함수 - 숫자의 2진수 앞 자리를 가지고 계산
 function compareBitsAtPosition(num1, num2, position) {
     // Convert numbers to binary strings with leading zeros
     const binary1 = num1.toString(2).padStart(position, '0');
@@ -355,7 +523,6 @@ function compareBitsAtPosition(num1, num2, position) {
     // Check if the bits at the specified position are the same
     return binary1[0] !== binary2[0];
 }
-
 </script>
 
 <style scoped>
@@ -404,11 +571,12 @@ function compareBitsAtPosition(num1, num2, position) {
 
 .bigCross:before,
 .bigCross:after {
+    --sqrt2: 1.4142135623730951;
     position: absolute;
     right: 0%;
-    top: calc(200px * -0.5 * sqrt(2));
+    top: calc(200px * -0.5 * var(--sqrt2));
     content: '';
-    height: calc(200px * sqrt(2));
+    height: calc(200px * var(--sqrt2));
     width: 1px;
     background-color: black;
 }
