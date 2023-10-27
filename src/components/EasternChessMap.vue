@@ -8,6 +8,7 @@
             <div v-if="board[i - 1][j - 1] != 0" class="z-4">
                 <img :src="getPieceImageUrl(board[i - 1][j - 1])" class="z-4 cursor-pointer" :class="{
                     'border-round border-3 border-green-300': isSelected(i - 1, j - 1),
+                    'border-round border-3 border-red-300': isLastMovde(i - 1, j - 1),
                     'pointer-events-none': isOnTurn(i - 1, j - 1)
                 }" @click="pathFinding(i - 1, j - 1)" />
             </div>
@@ -43,9 +44,9 @@ import { ref, onMounted } from 'vue'
 const emit = defineEmits(['turn', 'died'])
 
 onMounted(() => {
-    console.log("mounted")
+    //console.log("mounted")
     getInitialBoard('red')
-    // console.log(board.value[0][0])
+    // //console.log(board.value[0][0])
 })
 
 // 기물 이미지 가져오기
@@ -180,7 +181,7 @@ const getInitialBoard = (color) => {
             }
         }
     }
-    // console.log(board.value)
+    // //console.log(board.value)
 }
 
 // 선택 된 기물
@@ -192,6 +193,22 @@ const isSelected = (i, j) => {
         return false
     }
     else if (seletedPiece.value[0] == i && seletedPiece.value[1] == j) {
+        return true
+    }
+    else {
+        return false
+    }
+}
+
+// 마지막으로 움직인 위치의 기물
+const lastMove = ref(null)
+
+// 좌표 위치의 기물이 마지막 움직인 위치의 기물인지 확인
+const isLastMovde = (i, j) => {
+    if (lastMove.value == null) {
+        return false
+    }
+    else if (lastMove.value[0] == i && lastMove.value[1] == j) {
         return true
     }
     else {
@@ -244,7 +261,7 @@ const isMoveAvailable = (i, j) => {
 const pathFinding = (i, j) => {
     var delta
     availableMoves.value = null
-    // console.log(board.value[i][j])
+    // //console.log(board.value[i][j])
     const num = board.value[i][j]
 
     if (seletedPiece.value != null) {
@@ -331,10 +348,21 @@ const move = (row, column) => {
     if (board.value[row][column] != 0) {
         emit('died', board.value[row][column])
     }
+
+    // 장기판 정보 변경
     board.value[row][column] = board.value[seletedPiece.value[0]][seletedPiece.value[1]]
+
+    // 마지막 움직임 지점 저장
+    lastMove.value = [row, column]
+
+    // 움직이고 난 뒤의 자리는 0으로 변경
     board.value[seletedPiece.value[0]][seletedPiece.value[1]] = 0
+
+    // 차례 변경
     turn.value = turn.value == 8 ? 16 : 8
     emit('turn', turn.value)
+
+    // 초기화
     seletedPiece.value = null
     availableMoves.value = null
 }
@@ -361,7 +389,7 @@ const getPawnMovement = (i, j, delta) => {
     for (const d in delta) {
         const row = i + delta[d][0]
         const column = j + delta[d][1]
-        // console.log(board.value[column][row])
+        // //console.log(board.value[column][row])
         if (row < 0 || row > 9 || column < 0 || column > 8) {
             continue
         }
@@ -369,7 +397,7 @@ const getPawnMovement = (i, j, delta) => {
             availableMoves.value.push([row, column])
         }
     }
-    // console.log([i, j], availableMoves.value)
+    // //console.log([i, j], availableMoves.value)
 }
 
 // 왕의 움직임 계산 - 미완성
@@ -414,7 +442,7 @@ const getHorseMovement = (i, j, delta) => {
     for (const d in delta) {
         const row = i + delta[d][0]
         const column = j + delta[d][1]
-        // console.log(board.value[column][row])
+        // //console.log(board.value[column][row])
         if (row < 0 || row > 9 || column < 0 || column > 8) {
             continue
         }
@@ -430,7 +458,7 @@ const getHorseMovement = (i, j, delta) => {
             for (const nd in newDelta) {
                 var newRow = row + newDelta[nd][0]
                 var newColumn = column + newDelta[nd][1]
-                console.log(delta[d], newDelta)
+                //console.log(delta[d], newDelta)
 
                 if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
                     continue
@@ -464,7 +492,7 @@ const getElephantMovement = (i, j, delta) => {
             for (const nd in newDelta) {
                 const newRow = row + newDelta[nd][0]
                 const newColumn = column + newDelta[nd][1]
-                console.log(delta[d], newDelta)
+                //console.log(delta[d], newDelta)
 
                 if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
                     continue
@@ -511,7 +539,7 @@ const getChariotMovement = (i, j, delta) => {
 
 // 전진 확인 위한 재귀 함수
 const forwarding = (i, j, delta, initial) => {
-    //console.log('here', i, j, board.value[i][j])
+    ////console.log('here', i, j, board.value[i][j])
 
     const row = i + delta[0]
     const column = j + delta[1]
@@ -531,7 +559,7 @@ const forwarding = (i, j, delta, initial) => {
         forwarding(row, column, delta, initial)
     }
     else if (compareBitsAtPosition(board.value[row][column], initial, 5)) {
-        //console.log(board.value[row][column], board.value[i][j])
+        ////console.log(board.value[row][column], board.value[i][j])
         availableMoves.value.push([row, column])
     }
     return
@@ -553,7 +581,7 @@ const getCannonMovement = (i, j, delta) => {
     for (const d in delta) {
         beforeJump.value = []
         const check = checkBlock(i, j, delta[d])
-        console.log(check)
+        //console.log(check)
         if (check) {
             jumping(beforeJump.value[0], beforeJump.value[1], delta[d], initial)
         }
@@ -567,7 +595,7 @@ const beforeJump = ref([])
 const checkBlock = (i, j, delta) => {
     const row = i + delta[0]
     const column = j + delta[1]
-    console.log("test", row, column)
+    //console.log("test", row, column)
     if (row < 0 || row > 9 || column < 0 || column > 8) {
         return false
     }
@@ -579,7 +607,7 @@ const checkBlock = (i, j, delta) => {
     if (board.value[row][column] == 0) {
         const check = checkBlock(row, column, delta)
         if (check) {
-            console.log(check)
+            //console.log(check)
             return true
         }
         return false
@@ -592,7 +620,7 @@ const checkBlock = (i, j, delta) => {
 
 // 포의 점프 확인 위한 재귀 함수
 const jumping = (i, j, delta, initial) => {
-    console.log('jump', i, j)
+    //console.log('jump', i, j)
     const row = i + delta[0]
     const column = j + delta[1]
 
@@ -608,7 +636,7 @@ const jumping = (i, j, delta, initial) => {
         jumping(row, column, delta, initial)
     }
     else if (compareBitsAtPosition(board.value[row][column], initial, 5) && board.value[row][column] != 12 && board.value[row][column] != 20) {
-        //console.log(board.value[row][column], board.value[i][j])
+        ////console.log(board.value[row][column], board.value[i][j])
         availableMoves.value.push([row, column])
     }
     return
@@ -619,7 +647,7 @@ function compareBitsAtPosition(num1, num2, position) {
     // Convert numbers to binary strings with leading zeros
     const binary1 = num1.toString(2).padStart(position, '0');
     const binary2 = num2.toString(2).padStart(position, '0');
-    console.log(binary1, binary2)
+    //console.log(binary1, binary2)
     // Check if the bits at the specified position are the same
     return binary1[0] !== binary2[0];
 }
