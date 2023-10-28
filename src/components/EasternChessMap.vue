@@ -49,9 +49,7 @@ const sizePixel = size.value * 2 + 'px'
 
 onMounted(() => {
     //console.log("mounted")
-
     getInitialBoard('blue')
-    // //console.log(board.value[0][0])
 })
 
 // 기물 이미지 가져오기
@@ -128,6 +126,14 @@ const board = ref(
         [1, 3, 2, 6, 0, 6, 2, 3, 1],
     ]
 )
+
+const tempBoard = ref([])
+
+// 왕의 위치, 아군의 왕은 0번째 배열, 적의 왕은 1번째 배열
+const kingPosition = ref([
+    [8, 4],
+    [1, 4]
+])
 
 const palacePostionDelta = {
     '[0,3]': [[1, 1]],
@@ -264,7 +270,7 @@ const isMoveAvailable = (i, j) => {
 const pathFinding = (i, j) => {
     var delta
     availableMoves.value = null
-    // //console.log(board.value[i][j])
+
     const num = board.value[i][j]
 
     if (seletedPiece.value != null) {
@@ -348,6 +354,15 @@ const pathFinding = (i, j) => {
 
 // 선택한 기물을 선택한 좌표로 이동
 const move = (row, column) => {
+
+    tempBoard.value = JSON.parse(JSON.stringify(board.value))
+    tempBoard.value[row][column] = board.value[seletedPiece.value[0]][seletedPiece.value[1]]
+    tempBoard.value[seletedPiece.value[0]][seletedPiece.value[1]] = 0
+    // 움직이기 전 왕이 안전한지 확인
+    isKingDanger()
+
+
+    // 움직이는 위치에 기물이 있는지 확인
     if (board.value[row][column] != 0) {
         emit('died', board.value[row][column])
     }
@@ -357,6 +372,15 @@ const move = (row, column) => {
 
     // 마지막 움직임 지점 저장
     lastMove.value = [row, column]
+
+    if (board.value[row][column] % 8 == 5) {
+        if (turn.value == mySide) {
+            kingPosition.value[0] = [row, column]
+        }
+        else {
+            kingPosition.value[1] = [row, column]
+        }
+    }
 
     // 움직이고 난 뒤의 자리는 0으로 변경
     board.value[seletedPiece.value[0]][seletedPiece.value[1]] = 0
@@ -396,14 +420,13 @@ const getPawnMovement = (i, j, delta) => {
         if (row < 0 || row > 9 || column < 0 || column > 8) {
             continue
         }
-        if (board.value[row][column] == 0 || compareBitsAtPosition(board.value[row][column], board.value[i][j], 5)) {
+        if (board.value[row][column] == 0 || isEnermy(board.value[row][column], board.value[i][j], 5)) {
             availableMoves.value.push([row, column])
         }
     }
-    // //console.log([i, j], availableMoves.value)
 }
 
-// 왕의 움직임 계산 - 미완성
+// 왕의 움직임 계산
 const getKingMovement = (i, j, delta) => {
     movingInPalace(i, j, delta)
 }
@@ -432,7 +455,7 @@ const movingInPalace = (i, j, delta) => {
         if ((turn.value != mySide) && (row < 0 || row > 2 || column < 3 || column > 5)) {
             continue
         }
-        if (board.value[row][column] == 0 || compareBitsAtPosition(board.value[row][column], board.value[i][j], 5)) {
+        if (board.value[row][column] == 0 || isEnermy(board.value[row][column], board.value[i][j], 5)) {
             availableMoves.value.push([row, column])
         }
     }
@@ -445,7 +468,6 @@ const getHorseMovement = (i, j, delta) => {
     for (const d in delta) {
         const row = i + delta[d][0]
         const column = j + delta[d][1]
-        // //console.log(board.value[column][row])
         if (row < 0 || row > 9 || column < 0 || column > 8) {
             continue
         }
@@ -461,12 +483,11 @@ const getHorseMovement = (i, j, delta) => {
             for (const nd in newDelta) {
                 var newRow = row + newDelta[nd][0]
                 var newColumn = column + newDelta[nd][1]
-                //console.log(delta[d], newDelta)
 
                 if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
                     continue
                 }
-                if (board.value[newRow][newColumn] == 0 || compareBitsAtPosition(board.value[newRow][newColumn], board.value[i][j], 5)) {
+                if (board.value[newRow][newColumn] == 0 || isEnermy(board.value[newRow][newColumn], board.value[i][j], 5)) {
                     availableMoves.value.push([newRow, newColumn])
                 }
             }
@@ -495,7 +516,6 @@ const getElephantMovement = (i, j, delta) => {
             for (const nd in newDelta) {
                 const newRow = row + newDelta[nd][0]
                 const newColumn = column + newDelta[nd][1]
-                //console.log(delta[d], newDelta)
 
                 if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
                     continue
@@ -508,7 +528,7 @@ const getElephantMovement = (i, j, delta) => {
                         if (lastRow < 0 || lastRow > 9 || lastColumn < 0 || lastColumn > 8) {
                             continue
                         }
-                        if (board.value[lastRow][lastColumn] == 0 || compareBitsAtPosition(board.value[lastRow][lastColumn], board.value[i][j], 5)) {
+                        if (board.value[lastRow][lastColumn] == 0 || isEnermy(board.value[lastRow][lastColumn], board.value[i][j], 5)) {
                             availableMoves.value.push([lastRow, lastColumn])
                         }
                     }
@@ -542,7 +562,6 @@ const getChariotMovement = (i, j, delta) => {
 
 // 전진 확인 위한 재귀 함수
 const forwarding = (i, j, delta, initial) => {
-    ////console.log('here', i, j, board.value[i][j])
 
     const row = i + delta[0]
     const column = j + delta[1]
@@ -561,8 +580,7 @@ const forwarding = (i, j, delta, initial) => {
         availableMoves.value.push([row, column])
         forwarding(row, column, delta, initial)
     }
-    else if (compareBitsAtPosition(board.value[row][column], initial, 5)) {
-        ////console.log(board.value[row][column], board.value[i][j])
+    else if (isEnermy(board.value[row][column], initial, 5)) {
         availableMoves.value.push([row, column])
     }
     return
@@ -584,7 +602,6 @@ const getCannonMovement = (i, j, delta) => {
     for (const d in delta) {
         beforeJump.value = []
         const check = checkBlock(i, j, delta[d])
-        //console.log(check)
         if (check) {
             jumping(beforeJump.value[0], beforeJump.value[1], delta[d], initial)
         }
@@ -598,7 +615,6 @@ const beforeJump = ref([])
 const checkBlock = (i, j, delta) => {
     const row = i + delta[0]
     const column = j + delta[1]
-    //console.log("test", row, column)
     if (row < 0 || row > 9 || column < 0 || column > 8) {
         return false
     }
@@ -610,7 +626,6 @@ const checkBlock = (i, j, delta) => {
     if (board.value[row][column] == 0) {
         const check = checkBlock(row, column, delta)
         if (check) {
-            //console.log(check)
             return true
         }
         return false
@@ -623,7 +638,6 @@ const checkBlock = (i, j, delta) => {
 
 // 포의 점프 확인 위한 재귀 함수
 const jumping = (i, j, delta, initial) => {
-    //console.log('jump', i, j)
     const row = i + delta[0]
     const column = j + delta[1]
 
@@ -638,22 +652,225 @@ const jumping = (i, j, delta, initial) => {
         availableMoves.value.push([row, column])
         jumping(row, column, delta, initial)
     }
-    else if (compareBitsAtPosition(board.value[row][column], initial, 5) && board.value[row][column] != 12 && board.value[row][column] != 20) {
-        ////console.log(board.value[row][column], board.value[i][j])
+    else if (isEnermy(board.value[row][column], initial, 5) && board.value[row][column] != 12 && board.value[row][column] != 20) {
         availableMoves.value.push([row, column])
     }
     return
 }
 
 // 피아 식별을 위한 계산 함수 - 숫자의 2진수 앞 자리를 가지고 계산
-function compareBitsAtPosition(num1, num2, position) {
+// 적이면 true, 아군이면 false
+function isEnermy(num1, num2, position) {
     // Convert numbers to binary strings with leading zeros
     const binary1 = num1.toString(2).padStart(position, '0');
     const binary2 = num2.toString(2).padStart(position, '0');
-    //console.log(binary1, binary2)
     // Check if the bits at the specified position are the same
     return binary1[0] !== binary2[0];
 }
+
+
+// 왕의 위치를 중심으로, 차, 포, 마, 상, 졸병의 움직임을 역으로 계산하여 왕이 잡히는지 확인
+// 잡히면 true, 아니면 false
+// 아군 차례일 때는 기물 움직임 전에 이 함수가 호출됨
+// 적의 차례일 때는 기물 움직임 이후에 이 함수가 호출됨
+const isKingDanger = async () => {
+    if (turn.value == mySide) {
+        var king = kingPosition.value[0]
+        const i = king[0]
+        const j = king[1]
+
+        const key = '[' + i + ',' + j + ']'
+        if (palacePostionDelta[key] != undefined) {
+            var delta = palacePostionDelta[key]
+        }
+        await reversePathFinding(i, j, delta)
+
+    }
+    else {
+        var king = kingPosition.value[1]
+    }
+}
+
+
+const reverseBeforeJump = ref([])
+const reversePathFinding = async (i, j, additionalDelta) => {
+    // 1. 차포졸병의 위협 확인
+    var delta1 = [[-1, 0], [0, 1], [1, 0], [0, -1]]
+    for (const p in additionalDelta) {
+        delta1.push(additionalDelta[p])
+    }
+    reverseBeforeJump.value = []
+    for (const d in delta1) {
+        reversePawn(i, j, delta1[d])
+        await reverseChariot(i, j, delta1[d])
+    }
+    reverseCanonn()
+
+    // 2. 마상의 위협확인
+    var delta2 = [[1, 1], [-1, 1], [1, -1], [-1, -1]]
+    for (const d in delta2) {
+        reverseHorseAndElephant(i, j, delta2[d])
+    }
+}
+
+const reversePawn = (i, j, delta) => {
+    const row = i + delta[0]
+    const column = j + delta[1]
+
+    if (row < 0 || row > 9 || column < 0 || column > 8) {
+        return
+    }
+    if ((delta[0] != 0 && delta[1] != 0) && (row < 0 || row > 2 || column < 3 || column > 5) && (row < 7 || row > 9 || column < 3 || column > 5)) {
+        return
+    }
+    if (tempBoard.value[row][column] == 0) {
+        return
+    } else if (isEnermy(tempBoard.value[row][column], 5 + mySide, 5)) {
+        const piece = tempBoard.value[row][column] % 8
+        //아랫쪽 궁 기준 delta 값이 [1,0], [1, -1], [1, 1]이 아닐 때, 적 졸병이 있으면 위험한 상황
+        if (piece == 7 && delta[0] != 1) {
+            console.log("danger!!!")
+            return
+        }
+        return
+    }
+}
+
+const reverseChariot = async (i, j, delta) => {
+    const row = i + delta[0]
+    const column = j + delta[1]
+
+    if (row < 0 || row > 9 || column < 0 || column > 8) {
+        return
+    }
+
+    if ((delta[0] != 0 && delta[1] != 0) && (row < 0 || row > 2 || column < 3 || column > 5) && (row < 7 || row > 9 || column < 3 || column > 5)) {
+        return
+    }
+
+    if (tempBoard.value[row][column] != 0 && tempBoard.value[row][column] != 12 && tempBoard.value[row][column] != 20) {
+        reverseBeforeJump.value.push([row, column, delta])
+    }
+    if (tempBoard.value[row][column] == 0) {
+        await reverseChariot(row, column, delta)
+    } else if (isEnermy(tempBoard.value[row][column], 5 + mySide, 5)) {
+        const piece = tempBoard.value[row][column] % 8
+        // 경로 상에 상대방 차가 있으면 위험한 상황
+        if (piece == 1) {
+            console.log("danger!!!")
+            return
+        }
+        return
+    }
+}
+
+const reverseCanonn = () => {
+    for (const jump in reverseBeforeJump.value) {
+        reverseJumping(reverseBeforeJump.value[jump][0], reverseBeforeJump.value[jump][1], reverseBeforeJump.value[jump][2])
+    }
+}
+
+const reverseJumping = (i, j, delta) => {
+    const row = i + delta[0]
+    const column = j + delta[1]
+
+    if (row < 0 || row > 9 || column < 0 || column > 8) {
+        return
+    }
+    if ((delta[0] != 0 && delta[1] != 0) && (row < 0 || row > 2 || column < 3 || column > 5) && (row < 7 || row > 9 || column < 3 || column > 5)) {
+        return
+    }
+
+    if (tempBoard.value[row][column] == 0) {
+        reverseJumping(row, column, delta)
+    }
+    else if (isEnermy(board.value[row][column], 5 + mySide, 5)) {
+        const piece = tempBoard.value[row][column] % 8
+        if (piece == 4) {
+            console.log("danger!!!")
+            return
+        }
+    }
+    return
+}
+
+const reverseHorseAndElephant = (i, j, delta) => {
+    var row = i + delta[0]
+    var column = j + delta[1]
+    if (row < 0 || row > 9 || column < 0 || column > 8) {
+        return
+    }
+    // 첫 번째 대각선
+    if (tempBoard.value[row][column] == 0) {
+
+        // check if Horse existed
+        var newRow = row + delta[0]
+        var newColumn = column + 0
+        if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
+            return
+        }
+        if (isEnermy(tempBoard.value[newRow][newColumn], tempBoard.value[i][j], 5)) {
+            var piece = tempBoard.value[newRow][newColumn] % 8
+            if (piece == 3) {
+                console.log("danger!!!")
+                return
+            }
+        }
+
+        newRow = row + 0
+        newRow = column + delta[0]
+
+        if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
+            return
+        }
+        if (isEnermy(tempBoard.value[newRow][newColumn], tempBoard.value[i][j], 5)) {
+            piece = tempBoard.value[newRow][newColumn] % 8
+            if (piece == 3) {
+                console.log("danger!!!")
+                return
+            }
+        }
+
+        // check if elephant existed
+
+        row = row + delta[0]
+        column = column + delta[1]
+        if (row < 0 || row > 9 || column < 0 || column > 8) {
+            return
+        }
+
+        if (tempBoard.value[row][column] == 0) {
+            // check if Elephant existed
+            newRow = row + delta[0]
+            newColumn = column + 0
+            if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
+                return
+            }
+            if (isEnermy(tempBoard.value[newRow][newColumn], tempBoard.value[i][j], 5)) {
+                piece = tempBoard.value[newRow][newColumn] % 8
+                if (piece == 2) {
+                    console.log("danger!!!")
+                    return
+                }
+            }
+
+            newRow = row + 0
+            newRow = column + delta[0]
+
+            if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
+                return
+            }
+            if (isEnermy(tempBoard.value[newRow][newColumn], tempBoard.value[i][j], 5)) {
+                piece = tempBoard.value[newRow][newColumn] % 8
+                if (piece == 2) {
+                    console.log("danger!!!")
+                    return
+                }
+            }
+        }
+    }
+}
+
 </script>
 
 <style scoped>

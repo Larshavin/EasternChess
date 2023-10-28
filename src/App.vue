@@ -12,7 +12,8 @@ import { RouterLink, RouterView } from 'vue-router'
         </nav>
       </div>
     </header>
-    <RouterView style="max-height: 1200px; height: calc(100vh - 50px);" />
+    <RouterView style="max-height: 1200px; min-height:900px; height: calc(100vh - 50px);
+                       min-width: 800px;" />
   </div>
 </template>
 
