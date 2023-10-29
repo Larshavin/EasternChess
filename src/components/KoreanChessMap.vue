@@ -452,8 +452,8 @@ const movingInPalace = (i, j, delta) => {
             continue
         }
         if (board.value[row][column] == 0 || isEnermy(board.value[row][column], board.value[i][j], 5)) {
+            console.log(row, column, 'in palace')
             if (isKingDanger(row, column)) {
-                console.log(row, column)
                 availableMoves.value.push([row, column])
             }
         }
@@ -706,11 +706,11 @@ const isKingDanger = (row, column) => {
         if (palacePostionDelta[key] != undefined) {
             var delta = palacePostionDelta[key]
         }
-        console.log(reversePathFinding(i, j, delta, tempBoard))
         return reversePathFinding(i, j, delta, tempBoard)
     }
     else {
         if (board.value[seletedPiece.value[0]][seletedPiece.value[1]] % 8 == 5) {
+            console.log("king is moving")
             king = [row, column]
         } else {
             king = kingPosition.value[1]
@@ -722,7 +722,6 @@ const isKingDanger = (row, column) => {
         if (palacePostionDelta[key] != undefined) {
             var delta = palacePostionDelta[key]
         }
-        console.log(reversePathFinding(i, j, delta, tempBoard))
         return reversePathFinding(i, j, delta, tempBoard)
     }
 }
@@ -850,7 +849,7 @@ const reverseJumping = (i, j, delta, tempBoard) => {
         }
         return false
     }
-    else if (isEnermy(board.value[row][column], 5 + turn.value, 5)) {
+    else if (isEnermy(tempBoard[row][column], 5 + turn.value, 5)) {
         const piece = tempBoard[row][column] % 8
         if (piece == 4) {
             console.log("danger!!! threat by cannon")
@@ -878,13 +877,12 @@ const reverseHorseAndElephant = (i, j, delta, tempBoard) => {
         if (isEnermy(tempBoard[newRow][newColumn], 5 + turn.value, 5)) {
             var piece = tempBoard[newRow][newColumn] % 8
             if (piece == 3) {
-                console.log("danger!!! threat by Horse")
                 return false
             }
         }
 
         newRow = row + 0
-        newRow = column + delta[0]
+        newColumn = column + delta[0]
 
         if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
             return true
@@ -892,7 +890,6 @@ const reverseHorseAndElephant = (i, j, delta, tempBoard) => {
         if (isEnermy(tempBoard[newRow][newColumn], 5 + turn.value, 5)) {
             piece = tempBoard[newRow][newColumn] % 8
             if (piece == 3) {
-                console.log("danger!!! threat by Horse")
                 return false
             }
         }
@@ -915,13 +912,12 @@ const reverseHorseAndElephant = (i, j, delta, tempBoard) => {
             if (isEnermy(tempBoard[newRow][newColumn], 5 + turn.value, 5)) {
                 piece = tempBoard[newRow][newColumn] % 8
                 if (piece == 2) {
-                    console.log("danger!!! threat by Elephant")
                     return false
                 }
             }
 
             newRow = row + 0
-            newRow = column + delta[0]
+            newColumn = column + delta[0]
 
             if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
                 return true
@@ -929,7 +925,6 @@ const reverseHorseAndElephant = (i, j, delta, tempBoard) => {
             if (isEnermy(tempBoard[newRow][newColumn], 5 + turn.value, 5)) {
                 piece = tempBoard[newRow][newColumn] % 8
                 if (piece == 2) {
-                    console.log("danger!!! threat by Elephant")
                     return false
                 }
             }

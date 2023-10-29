@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import EasternChessMap from '@/components/EasternChessMap.vue'
+import KoreanChessMap from '@/components/KoreanChessMap.vue'
 const turn = ref('초나라')
 
 const height_size = ref(600)
@@ -50,14 +50,23 @@ const getDiedPiece = (n) => {
   if (n < 16) {
     var pieceNum = n - 8
     var pieceName = pieces.value[pieceNum]
+    if (pieceNum == 5) {
+      alert("초나라 왕이 죽었습니다.")
+      return
+    }
     if (pieceNum != 7) {
       died.value['초'][pieceName] += 1
-    } else {
+    }
+    else {
       died.value['초']['졸'] += 1
     }
   } else {
     pieceNum = n - 16
     pieceName = pieces.value[pieceNum]
+    if (pieceNum == 5) {
+      alert("한나라 왕이 죽었습니다.")
+      return
+    }
     if (pieceNum != 7) {
       died.value['한'][pieceName] += 1
     } else {
@@ -80,7 +89,7 @@ const getDiedPiece = (n) => {
     <!-- background-image: url('board.jpg'); -->
     <div class=" border-1 m-5 overflow-hidden" style="background-image: url('board.jpeg'); background-size: cover;"
       :style="{ 'width': width_size + 'px', 'height': height_size + 'px' }">
-      <EasternChessMap @turn="(n) => turnChange(n)" @died="(n) => getDiedPiece(n)" :size="size" />
+      <KoreanChessMap @turn="(n) => turnChange(n)" @died="(n) => getDiedPiece(n)" :size="size" />
     </div>
     <div>
       <div class="flex justify-content-center m-4">
