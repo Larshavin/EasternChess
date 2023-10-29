@@ -710,8 +710,20 @@ const isKingDanger = (row, column) => {
         return reversePathFinding(i, j, delta, tempBoard)
     }
     else {
-        var king = kingPosition.value[1]
-        return true
+        if (board.value[seletedPiece.value[0]][seletedPiece.value[1]] % 8 == 5) {
+            king = [row, column]
+        } else {
+            king = kingPosition.value[1]
+        }
+        const i = king[0]
+        const j = king[1]
+
+        const key = '[' + i + ',' + j + ']'
+        if (palacePostionDelta[key] != undefined) {
+            var delta = palacePostionDelta[key]
+        }
+        console.log(reversePathFinding(i, j, delta, tempBoard))
+        return reversePathFinding(i, j, delta, tempBoard)
     }
 }
 
@@ -765,10 +777,13 @@ const reversePawn = (i, j, delta, tempBoard) => {
     }
     if (tempBoard[row][column] == 0) {
         return true
-    } else if (isEnermy(tempBoard[row][column], 5 + mySide, 5)) {
+    } else if (isEnermy(tempBoard[row][column], 5 + turn.value, 5)) {
         const piece = tempBoard[row][column] % 8
         //아랫쪽 궁 기준 delta 값이 [1,0], [1, -1], [1, 1]이 아닐 때, 적 졸병이 있으면 위험한 상황
-        if (piece == 7 && delta[0] != 1) {
+        if (turn.value == 8 && piece == 7 && delta[0] != 1) {
+            console.log("danger!!! threat by pawn")
+            return false
+        } else if (turn.value == 16 && piece == 7 && delta[0] != -1) {
             console.log("danger!!! threat by pawn")
             return false
         }
@@ -797,7 +812,7 @@ const reverseChariot = (i, j, delta, tempBoard) => {
             return false
         }
         return true
-    } else if (isEnermy(tempBoard[row][column], 5 + mySide, 5)) {
+    } else if (isEnermy(tempBoard[row][column], 5 + turn.value, 5)) {
         const piece = tempBoard[row][column] % 8
         // 경로 상에 상대방 차가 있으면 위험한 상황
         if (piece == 1) {
@@ -835,7 +850,7 @@ const reverseJumping = (i, j, delta, tempBoard) => {
         }
         return false
     }
-    else if (isEnermy(board.value[row][column], 5 + mySide, 5)) {
+    else if (isEnermy(board.value[row][column], 5 + turn.value, 5)) {
         const piece = tempBoard[row][column] % 8
         if (piece == 4) {
             console.log("danger!!! threat by cannon")
@@ -860,7 +875,7 @@ const reverseHorseAndElephant = (i, j, delta, tempBoard) => {
         if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
             return true
         }
-        if (isEnermy(tempBoard[newRow][newColumn], tempBoard[i][j], 5)) {
+        if (isEnermy(tempBoard[newRow][newColumn], 5 + turn.value, 5)) {
             var piece = tempBoard[newRow][newColumn] % 8
             if (piece == 3) {
                 console.log("danger!!! threat by Horse")
@@ -874,7 +889,7 @@ const reverseHorseAndElephant = (i, j, delta, tempBoard) => {
         if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
             return true
         }
-        if (isEnermy(tempBoard[newRow][newColumn], tempBoard[i][j], 5)) {
+        if (isEnermy(tempBoard[newRow][newColumn], 5 + turn.value, 5)) {
             piece = tempBoard[newRow][newColumn] % 8
             if (piece == 3) {
                 console.log("danger!!! threat by Horse")
@@ -897,7 +912,7 @@ const reverseHorseAndElephant = (i, j, delta, tempBoard) => {
             if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
                 return true
             }
-            if (isEnermy(tempBoard[newRow][newColumn], tempBoard[i][j], 5)) {
+            if (isEnermy(tempBoard[newRow][newColumn], 5 + turn.value, 5)) {
                 piece = tempBoard[newRow][newColumn] % 8
                 if (piece == 2) {
                     console.log("danger!!! threat by Elephant")
@@ -911,7 +926,7 @@ const reverseHorseAndElephant = (i, j, delta, tempBoard) => {
             if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
                 return true
             }
-            if (isEnermy(tempBoard[newRow][newColumn], tempBoard[i][j], 5)) {
+            if (isEnermy(tempBoard[newRow][newColumn], 5 + turn.value, 5)) {
                 piece = tempBoard[newRow][newColumn] % 8
                 if (piece == 2) {
                     console.log("danger!!! threat by Elephant")
