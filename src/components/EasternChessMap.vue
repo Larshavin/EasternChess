@@ -355,13 +355,6 @@ const pathFinding = (i, j) => {
 // 선택한 기물을 선택한 좌표로 이동
 const move = (row, column) => {
 
-    tempBoard.value = JSON.parse(JSON.stringify(board.value))
-    tempBoard.value[row][column] = board.value[seletedPiece.value[0]][seletedPiece.value[1]]
-    tempBoard.value[seletedPiece.value[0]][seletedPiece.value[1]] = 0
-    // 움직이기 전 왕이 안전한지 확인
-    isKingDanger()
-
-
     // 움직이는 위치에 기물이 있는지 확인
     if (board.value[row][column] != 0) {
         emit('died', board.value[row][column])
@@ -421,7 +414,10 @@ const getPawnMovement = (i, j, delta) => {
             continue
         }
         if (board.value[row][column] == 0 || isEnermy(board.value[row][column], board.value[i][j], 5)) {
-            availableMoves.value.push([row, column])
+            // 움직이기 전 왕이 안전한지 확인
+            if (isKingDanger(row, column)) {
+                availableMoves.value.push([row, column])
+            }
         }
     }
 }
@@ -456,7 +452,10 @@ const movingInPalace = (i, j, delta) => {
             continue
         }
         if (board.value[row][column] == 0 || isEnermy(board.value[row][column], board.value[i][j], 5)) {
-            availableMoves.value.push([row, column])
+            if (isKingDanger(row, column)) {
+                console.log(row, column)
+                availableMoves.value.push([row, column])
+            }
         }
     }
 }
@@ -488,7 +487,9 @@ const getHorseMovement = (i, j, delta) => {
                     continue
                 }
                 if (board.value[newRow][newColumn] == 0 || isEnermy(board.value[newRow][newColumn], board.value[i][j], 5)) {
-                    availableMoves.value.push([newRow, newColumn])
+                    if (isKingDanger(newRow, newColumn)) {
+                        availableMoves.value.push([newRow, newColumn])
+                    }
                 }
             }
         }
@@ -529,7 +530,9 @@ const getElephantMovement = (i, j, delta) => {
                             continue
                         }
                         if (board.value[lastRow][lastColumn] == 0 || isEnermy(board.value[lastRow][lastColumn], board.value[i][j], 5)) {
-                            availableMoves.value.push([lastRow, lastColumn])
+                            if (isKingDanger(lastRow, lastColumn)) {
+                                availableMoves.value.push([lastRow, lastColumn])
+                            }
                         }
                     }
                 }
@@ -577,11 +580,15 @@ const forwarding = (i, j, delta, initial) => {
     }
 
     if (board.value[row][column] == 0) {
-        availableMoves.value.push([row, column])
+        if (isKingDanger(row, column)) {
+            availableMoves.value.push([row, column])
+        }
         forwarding(row, column, delta, initial)
     }
     else if (isEnermy(board.value[row][column], initial, 5)) {
-        availableMoves.value.push([row, column])
+        if (isKingDanger(row, column)) {
+            availableMoves.value.push([row, column])
+        }
     }
     return
 }
@@ -649,11 +656,15 @@ const jumping = (i, j, delta, initial) => {
     }
 
     if (board.value[row][column] == 0) {
-        availableMoves.value.push([row, column])
+        if (isKingDanger(row, column)) {
+            availableMoves.value.push([row, column])
+        }
         jumping(row, column, delta, initial)
     }
     else if (isEnermy(board.value[row][column], initial, 5) && board.value[row][column] != 12 && board.value[row][column] != 20) {
-        availableMoves.value.push([row, column])
+        if (isKingDanger(row, column)) {
+            availableMoves.value.push([row, column])
+        }
     }
     return
 }
@@ -673,9 +684,21 @@ function isEnermy(num1, num2, position) {
 // 잡히면 true, 아니면 false
 // 아군 차례일 때는 기물 움직임 전에 이 함수가 호출됨
 // 적의 차례일 때는 기물 움직임 이후에 이 함수가 호출됨
-const isKingDanger = async () => {
+const isKingDanger = (row, column) => {
+
+    var tempBoard = JSON.parse(JSON.stringify(board.value))
+    tempBoard[row][column] = board.value[seletedPiece.value[0]][seletedPiece.value[1]]
+    tempBoard[seletedPiece.value[0]][seletedPiece.value[1]] = 0
+
     if (turn.value == mySide) {
-        var king = kingPosition.value[0]
+        var king
+        // 만약 선택한 기물이 왕이면
+        if (board.value[seletedPiece.value[0]][seletedPiece.value[1]] % 8 == 5) {
+            // console.log("king is moving")
+            king = [row, column]
+        } else {
+            king = kingPosition.value[0]
+        }
         const i = king[0]
         const j = king[1]
 
@@ -683,17 +706,18 @@ const isKingDanger = async () => {
         if (palacePostionDelta[key] != undefined) {
             var delta = palacePostionDelta[key]
         }
-        await reversePathFinding(i, j, delta)
-
+        console.log(reversePathFinding(i, j, delta, tempBoard))
+        return reversePathFinding(i, j, delta, tempBoard)
     }
     else {
         var king = kingPosition.value[1]
+        return true
     }
 }
 
 
 const reverseBeforeJump = ref([])
-const reversePathFinding = async (i, j, additionalDelta) => {
+const reversePathFinding = (i, j, additionalDelta, tempBoard) => {
     // 1. 차포졸병의 위협 확인
     var delta1 = [[-1, 0], [0, 1], [1, 0], [0, -1]]
     for (const p in additionalDelta) {
@@ -701,119 +725,146 @@ const reversePathFinding = async (i, j, additionalDelta) => {
     }
     reverseBeforeJump.value = []
     for (const d in delta1) {
-        reversePawn(i, j, delta1[d])
-        await reverseChariot(i, j, delta1[d])
+        if (!reversePawn(i, j, delta1[d], tempBoard)) {
+            // console.log("king is in danger by pawn", reversePawn(i, j, delta1[d], tempBoard))
+            return false
+        }
+
+        if (!reverseChariot(i, j, delta1[d], tempBoard)) {
+            // console.log("king is in danger by chariot")
+            return false
+        }
     }
-    reverseCanonn()
+
+    if (!reverseCanonn(tempBoard)) {
+        // console.log("king is in danger by cannon")
+        return false
+    }
 
     // 2. 마상의 위협확인
     var delta2 = [[1, 1], [-1, 1], [1, -1], [-1, -1]]
     for (const d in delta2) {
-        reverseHorseAndElephant(i, j, delta2[d])
+        if (!reverseHorseAndElephant(i, j, delta2[d], tempBoard)) {
+            // console.log("king is in danger by horse or elephant")
+            return false
+        }
     }
+
+    return true
 }
 
-const reversePawn = (i, j, delta) => {
+const reversePawn = (i, j, delta, tempBoard) => {
     const row = i + delta[0]
     const column = j + delta[1]
 
     if (row < 0 || row > 9 || column < 0 || column > 8) {
-        return
+        return true
     }
     if ((delta[0] != 0 && delta[1] != 0) && (row < 0 || row > 2 || column < 3 || column > 5) && (row < 7 || row > 9 || column < 3 || column > 5)) {
-        return
+        return true
     }
-    if (tempBoard.value[row][column] == 0) {
-        return
-    } else if (isEnermy(tempBoard.value[row][column], 5 + mySide, 5)) {
-        const piece = tempBoard.value[row][column] % 8
+    if (tempBoard[row][column] == 0) {
+        return true
+    } else if (isEnermy(tempBoard[row][column], 5 + mySide, 5)) {
+        const piece = tempBoard[row][column] % 8
         //아랫쪽 궁 기준 delta 값이 [1,0], [1, -1], [1, 1]이 아닐 때, 적 졸병이 있으면 위험한 상황
         if (piece == 7 && delta[0] != 1) {
-            console.log("danger!!!")
-            return
+            console.log("danger!!! threat by pawn")
+            return false
         }
-        return
+        return true
     }
+    return true
 }
 
-const reverseChariot = async (i, j, delta) => {
+const reverseChariot = (i, j, delta, tempBoard) => {
     const row = i + delta[0]
     const column = j + delta[1]
 
     if (row < 0 || row > 9 || column < 0 || column > 8) {
-        return
+        return true
     }
 
     if ((delta[0] != 0 && delta[1] != 0) && (row < 0 || row > 2 || column < 3 || column > 5) && (row < 7 || row > 9 || column < 3 || column > 5)) {
-        return
+        return true
     }
 
-    if (tempBoard.value[row][column] != 0 && tempBoard.value[row][column] != 12 && tempBoard.value[row][column] != 20) {
+    if (tempBoard[row][column] != 0 && tempBoard[row][column] != 12 && tempBoard[row][column] != 20) {
         reverseBeforeJump.value.push([row, column, delta])
     }
-    if (tempBoard.value[row][column] == 0) {
-        await reverseChariot(row, column, delta)
-    } else if (isEnermy(tempBoard.value[row][column], 5 + mySide, 5)) {
-        const piece = tempBoard.value[row][column] % 8
+    if (tempBoard[row][column] == 0) {
+        if (!reverseChariot(row, column, delta, tempBoard)) {
+            return false
+        }
+        return true
+    } else if (isEnermy(tempBoard[row][column], 5 + mySide, 5)) {
+        const piece = tempBoard[row][column] % 8
         // 경로 상에 상대방 차가 있으면 위험한 상황
         if (piece == 1) {
-            console.log("danger!!!")
-            return
+            console.log("danger!!! threat by chariot")
+            return false
         }
-        return
+        return true
     }
+    return true
 }
 
-const reverseCanonn = () => {
+const reverseCanonn = (tempBoard) => {
     for (const jump in reverseBeforeJump.value) {
-        reverseJumping(reverseBeforeJump.value[jump][0], reverseBeforeJump.value[jump][1], reverseBeforeJump.value[jump][2])
+        if (!reverseJumping(reverseBeforeJump.value[jump][0], reverseBeforeJump.value[jump][1], reverseBeforeJump.value[jump][2], tempBoard)) {
+            return false
+        }
     }
+    return true
 }
 
-const reverseJumping = (i, j, delta) => {
+const reverseJumping = (i, j, delta, tempBoard) => {
     const row = i + delta[0]
     const column = j + delta[1]
 
     if (row < 0 || row > 9 || column < 0 || column > 8) {
-        return
+        return true
     }
     if ((delta[0] != 0 && delta[1] != 0) && (row < 0 || row > 2 || column < 3 || column > 5) && (row < 7 || row > 9 || column < 3 || column > 5)) {
-        return
+        return true
     }
 
-    if (tempBoard.value[row][column] == 0) {
-        reverseJumping(row, column, delta)
+    if (tempBoard[row][column] == 0) {
+        if (reverseJumping(row, column, delta, tempBoard)) {
+            return true
+        }
+        return false
     }
     else if (isEnermy(board.value[row][column], 5 + mySide, 5)) {
-        const piece = tempBoard.value[row][column] % 8
+        const piece = tempBoard[row][column] % 8
         if (piece == 4) {
-            console.log("danger!!!")
-            return
+            console.log("danger!!! threat by cannon")
+            return false
         }
     }
-    return
+    return true
 }
 
-const reverseHorseAndElephant = (i, j, delta) => {
+const reverseHorseAndElephant = (i, j, delta, tempBoard) => {
     var row = i + delta[0]
     var column = j + delta[1]
     if (row < 0 || row > 9 || column < 0 || column > 8) {
-        return
+        return true
     }
     // 첫 번째 대각선
-    if (tempBoard.value[row][column] == 0) {
+    if (tempBoard[row][column] == 0) {
 
         // check if Horse existed
         var newRow = row + delta[0]
         var newColumn = column + 0
         if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
-            return
+            return true
         }
-        if (isEnermy(tempBoard.value[newRow][newColumn], tempBoard.value[i][j], 5)) {
-            var piece = tempBoard.value[newRow][newColumn] % 8
+        if (isEnermy(tempBoard[newRow][newColumn], tempBoard[i][j], 5)) {
+            var piece = tempBoard[newRow][newColumn] % 8
             if (piece == 3) {
-                console.log("danger!!!")
-                return
+                console.log("danger!!! threat by Horse")
+                return false
             }
         }
 
@@ -821,13 +872,13 @@ const reverseHorseAndElephant = (i, j, delta) => {
         newRow = column + delta[0]
 
         if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
-            return
+            return true
         }
-        if (isEnermy(tempBoard.value[newRow][newColumn], tempBoard.value[i][j], 5)) {
-            piece = tempBoard.value[newRow][newColumn] % 8
+        if (isEnermy(tempBoard[newRow][newColumn], tempBoard[i][j], 5)) {
+            piece = tempBoard[newRow][newColumn] % 8
             if (piece == 3) {
-                console.log("danger!!!")
-                return
+                console.log("danger!!! threat by Horse")
+                return false
             }
         }
 
@@ -836,21 +887,21 @@ const reverseHorseAndElephant = (i, j, delta) => {
         row = row + delta[0]
         column = column + delta[1]
         if (row < 0 || row > 9 || column < 0 || column > 8) {
-            return
+            return true
         }
 
-        if (tempBoard.value[row][column] == 0) {
+        if (tempBoard[row][column] == 0) {
             // check if Elephant existed
             newRow = row + delta[0]
             newColumn = column + 0
             if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
-                return
+                return true
             }
-            if (isEnermy(tempBoard.value[newRow][newColumn], tempBoard.value[i][j], 5)) {
-                piece = tempBoard.value[newRow][newColumn] % 8
+            if (isEnermy(tempBoard[newRow][newColumn], tempBoard[i][j], 5)) {
+                piece = tempBoard[newRow][newColumn] % 8
                 if (piece == 2) {
-                    console.log("danger!!!")
-                    return
+                    console.log("danger!!! threat by Elephant")
+                    return false
                 }
             }
 
@@ -858,17 +909,18 @@ const reverseHorseAndElephant = (i, j, delta) => {
             newRow = column + delta[0]
 
             if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
-                return
+                return true
             }
-            if (isEnermy(tempBoard.value[newRow][newColumn], tempBoard.value[i][j], 5)) {
-                piece = tempBoard.value[newRow][newColumn] % 8
+            if (isEnermy(tempBoard[newRow][newColumn], tempBoard[i][j], 5)) {
+                piece = tempBoard[newRow][newColumn] % 8
                 if (piece == 2) {
-                    console.log("danger!!!")
-                    return
+                    console.log("danger!!! threat by Elephant")
+                    return false
                 }
             }
         }
     }
+    return true
 }
 
 </script>
