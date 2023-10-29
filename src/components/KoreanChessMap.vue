@@ -352,6 +352,8 @@ const pathFinding = (i, j) => {
     }
 }
 
+const janggun = ref(false)
+
 // 선택한 기물을 선택한 좌표로 이동
 const move = (row, column) => {
 
@@ -365,6 +367,13 @@ const move = (row, column) => {
 
     // 마지막 움직임 지점 저장
     lastMove.value = [row, column]
+
+    // 위험한 방식일 수도 있지만, 이미 클릭이 가능하다는 전제하에 이렇게 처리함. 
+    // => 체크메이트 확인은 다른 곳에서 처리 (watch 등을 이용)
+    if (janggun.value) {
+        janggun.value = false
+        alert("멍군입니다.")
+    }
 
     if (board.value[row][column] % 8 == 5) {
         if (turn.value == mySide) {
@@ -381,6 +390,12 @@ const move = (row, column) => {
     // 차례 변경
     turn.value = turn.value == 8 ? 16 : 8
     emit('turn', turn.value)
+
+    // 장군 확인
+    if (!isKingSafe(row, column, true)) {
+        janggun.value = true
+        alert("장군입니다.")
+    }
 
     // 초기화
     seletedPiece.value = null
@@ -415,7 +430,7 @@ const getPawnMovement = (i, j, delta) => {
         }
         if (board.value[row][column] == 0 || isEnermy(board.value[row][column], board.value[i][j], 5)) {
             // 움직이기 전 왕이 안전한지 확인
-            if (isKingDanger(row, column)) {
+            if (isKingSafe(row, column)) {
                 availableMoves.value.push([row, column])
             }
         }
@@ -452,8 +467,7 @@ const movingInPalace = (i, j, delta) => {
             continue
         }
         if (board.value[row][column] == 0 || isEnermy(board.value[row][column], board.value[i][j], 5)) {
-            console.log(row, column, 'in palace')
-            if (isKingDanger(row, column)) {
+            if (isKingSafe(row, column)) {
                 availableMoves.value.push([row, column])
             }
         }
@@ -487,7 +501,7 @@ const getHorseMovement = (i, j, delta) => {
                     continue
                 }
                 if (board.value[newRow][newColumn] == 0 || isEnermy(board.value[newRow][newColumn], board.value[i][j], 5)) {
-                    if (isKingDanger(newRow, newColumn)) {
+                    if (isKingSafe(newRow, newColumn)) {
                         availableMoves.value.push([newRow, newColumn])
                     }
                 }
@@ -530,7 +544,7 @@ const getElephantMovement = (i, j, delta) => {
                             continue
                         }
                         if (board.value[lastRow][lastColumn] == 0 || isEnermy(board.value[lastRow][lastColumn], board.value[i][j], 5)) {
-                            if (isKingDanger(lastRow, lastColumn)) {
+                            if (isKingSafe(lastRow, lastColumn)) {
                                 availableMoves.value.push([lastRow, lastColumn])
                             }
                         }
@@ -580,13 +594,13 @@ const forwarding = (i, j, delta, initial) => {
     }
 
     if (board.value[row][column] == 0) {
-        if (isKingDanger(row, column)) {
+        if (isKingSafe(row, column)) {
             availableMoves.value.push([row, column])
         }
         forwarding(row, column, delta, initial)
     }
     else if (isEnermy(board.value[row][column], initial, 5)) {
-        if (isKingDanger(row, column)) {
+        if (isKingSafe(row, column)) {
             availableMoves.value.push([row, column])
         }
     }
@@ -656,13 +670,13 @@ const jumping = (i, j, delta, initial) => {
     }
 
     if (board.value[row][column] == 0) {
-        if (isKingDanger(row, column)) {
+        if (isKingSafe(row, column)) {
             availableMoves.value.push([row, column])
         }
         jumping(row, column, delta, initial)
     }
     else if (isEnermy(board.value[row][column], initial, 5) && board.value[row][column] != 12 && board.value[row][column] != 20) {
-        if (isKingDanger(row, column)) {
+        if (isKingSafe(row, column)) {
             availableMoves.value.push([row, column])
         }
     }
@@ -684,17 +698,24 @@ function isEnermy(num1, num2, position) {
 // 잡히면 true, 아니면 false
 // 아군 차례일 때는 기물 움직임 전에 이 함수가 호출됨
 // 적의 차례일 때는 기물 움직임 이후에 이 함수가 호출됨
-const isKingDanger = (row, column) => {
+const isKingSafe = (row, column, check) => {
 
-    var tempBoard = JSON.parse(JSON.stringify(board.value))
-    tempBoard[row][column] = board.value[seletedPiece.value[0]][seletedPiece.value[1]]
-    tempBoard[seletedPiece.value[0]][seletedPiece.value[1]] = 0
+    if (check == undefined) {
+        check = false
+    }
+
+    if (check) {
+        var tempBoard = JSON.parse(JSON.stringify(board.value))
+    } else {
+        var tempBoard = JSON.parse(JSON.stringify(board.value))
+        tempBoard[row][column] = board.value[seletedPiece.value[0]][seletedPiece.value[1]]
+        tempBoard[seletedPiece.value[0]][seletedPiece.value[1]] = 0
+    }
 
     if (turn.value == mySide) {
         var king
         // 만약 선택한 기물이 왕이면
         if (board.value[seletedPiece.value[0]][seletedPiece.value[1]] % 8 == 5) {
-            // console.log("king is moving")
             king = [row, column]
         } else {
             king = kingPosition.value[0]
@@ -710,7 +731,6 @@ const isKingDanger = (row, column) => {
     }
     else {
         if (board.value[seletedPiece.value[0]][seletedPiece.value[1]] % 8 == 5) {
-            console.log("king is moving")
             king = [row, column]
         } else {
             king = kingPosition.value[1]
