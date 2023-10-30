@@ -22,13 +22,13 @@
                 <!-- 장기판 꾸미기 : 선, 대각선, 엑스표 -->
                 <div class="z-0">
                     <div v-if="i != 1" class="absolute top-0 left-0 border-right-1 m-0 p-0 "
-                        :style="{ 'height': (size / 2) + 'px', 'width': (size / 2) - 1 + 'px' }">
+                        :style="{ 'height': (size / 2) + 'px', 'width': (size / 2) + 0.782 + 'px' }">
                     </div>
                     <div v-if="j != 9" class="absolute top-0 right-0 border-bottom-1 m-0 p-0"
                         :style="{ 'height': (size / 2) + 'px', 'width': (size / 2) + 'px' }">
                     </div>
                     <div v-if="j != 1" class="absolute bottom-0 left-0 border-top-1 m-0 p-0"
-                        :style="{ 'height': (size / 2) - 1 + 'px', 'width': (size / 2) + 'px' }">
+                        :style="{ 'height': (size / 2) + 1 + 'px', 'width': (size / 2) + 'px' }">
                     </div>
                     <div v-if="i != 10" class="absolute bottom-0 right-0 border-left-1 m-0 p-0"
                         :style="{ 'height': (size / 2) + 'px', 'width': (size / 2) + 'px' }">

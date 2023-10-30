@@ -6,5 +6,13 @@
     - 개인 로그인 기능 <br />
     - 개인 로그아웃 기능 ... (천천히) <br />
 
+    <div>
+      <Button>매칭 찾기</Button>
+      <Button>혼자 두기</Button>
+    </div>
+
   </div>
 </template>
+
+<script>
+</script>
