@@ -71,6 +71,7 @@ function getPieceImageUrl(num) {
         23: `../assets/janggi_pieces/red_pawn.svg`,
     }
 
+    // console.log(URL(pieceImages[num], import.meta.url).href)
     return new URL(pieceImages[num], import.meta.url).href;
 }
 
