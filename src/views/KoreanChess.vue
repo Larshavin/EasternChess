@@ -77,36 +77,38 @@ const getDiedPiece = (n) => {
 </script>
 
 <template>
-    <div class="flex flex-column justify-content-center align-items-center">
-        <div>
-            장기
-        </div>
-        <div>
-            {{ turn }}의 순서 입니다.
-        </div>
-        <!-- Korean Chess Map displayed -->
-        <div class="relative border-1 m-5 overflow-hidden"
-            :style="{ 'width': width_size + 'px', 'height': height_size + 'px' }">
-            <KoreanChessMap @turn="(n) => turnChange(n)" @died="(n) => getDiedPiece(n)" :size="size" />
-            <img src="@/assets/board.jpeg" class="absolute top-0"
-                style="background-size: cover; width: 100%; height: 100%; z-index: -1;" />
-        </div>
-        <div>
-            <div class="flex justify-content-center m-4">
-                &lt 먹힌 기물 &gt
+    <div>
+        <div class="flex flex-column justify-content-center align-items-center">
+            <div>
+                장기
             </div>
-            <!-- 초나라 먹힌 기물 -->
-            <div class="flex mb-2">
-                <div class="mr-3"> 초나라 == </div>
-                <div v-for="count, piece in died['초']" :key="piece" class="mr-3">
-                    {{ piece }}: {{ count }}
+            <div>
+                {{ turn }}의 순서 입니다.
+            </div>
+            <!-- Korean Chess Map displayed -->
+            <div class="relative border-1 m-5 overflow-hidden"
+                :style="{ 'width': width_size + 'px', 'height': height_size + 'px' }">
+                <KoreanChessMap @turn="(n) => turnChange(n)" @died="(n) => getDiedPiece(n)" :size="size" />
+                <img src="@/assets/board.jpeg" class="absolute top-0"
+                    style="background-size: cover; width: 100%; height: 100%; z-index: -1;" />
+            </div>
+            <div>
+                <div class="flex justify-content-center m-4">
+                    &lt 먹힌 기물 &gt
                 </div>
-            </div>
-            <!-- 한나라 먹힌 기물 -->
-            <div class="flex">
-                <div class="mr-3"> 한나라 == </div>
-                <div v-for="count, piece in died['한']" :key="piece" class="mr-3">
-                    {{ piece }}: {{ count }}
+                <!-- 초나라 먹힌 기물 -->
+                <div class="flex mb-2">
+                    <div class="mr-3"> 초나라 == </div>
+                    <div v-for="count, piece in died['초']" :key="piece" class="mr-3">
+                        {{ piece }}: {{ count }}
+                    </div>
+                </div>
+                <!-- 한나라 먹힌 기물 -->
+                <div class="flex">
+                    <div class="mr-3"> 한나라 == </div>
+                    <div v-for="count, piece in died['한']" :key="piece" class="mr-3">
+                        {{ piece }}: {{ count }}
+                    </div>
                 </div>
             </div>
         </div>

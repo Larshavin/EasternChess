@@ -22,6 +22,7 @@ const router = createRouter({
       path: '/janggi',
       name: 'KoreanChess',
       component: KoreanChess
+      // component: () => import('../views/KoreanChess.vue')
     }
   ]
 })

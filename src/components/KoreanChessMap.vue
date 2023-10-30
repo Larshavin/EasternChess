@@ -1,39 +1,42 @@
 <template>
-    <!-- row : 행 10줄 : 1부터 시작 -->
-    <div v-for="i in 10" class="flex not_draggable" @contextmenu.prevent>
-        <!-- column : 열 9줄 : 1부터 시작 -->
-        <div v-for="j in 9" class="relative p-0 flex justify-content-center align-items-center"
-            :style="{ 'height': size + 'px', 'width': size + 'px' }">
-            <!-- 실제 기물의 위치 -->
-            <div v-if="board[i - 1][j - 1] != 0" class="z-4">
-                <img :src="getPieceImageUrl(board[i - 1][j - 1])" class="z-4 cursor-pointer" :class="{
-                    'border-round border-3 border-green-300': isSelected(i - 1, j - 1),
-                    'border-round border-3 border-red-300': isLastMovde(i - 1, j - 1),
-                    'pointer-events-none': isOnTurn(i - 1, j - 1)
-                }" :style="{ 'height': size * 0.9 + 'px', 'width': size * 0.9 + 'px' }"
-                    @click="pathFinding(i - 1, j - 1)" />
-            </div>
-            <!-- 움직일 수 있는 경로 선택 -->
-            <div v-if="isMoveAvailable(i - 1, j - 1)"
-                class="absolute border-circle bg-green-200 border-1 border-green-600 z-5 shadow-2 cursor-pointer"
-                :style="{ 'height': size / 4 + 'px', 'width': size / 4 + 'px' }" @click="move(i - 1, j - 1)">
-            </div>
-            <!-- 장기판 꾸미기 : 선, 대각선, 엑스표 -->
-            <div class="z-0">
-                <div v-if="i != 1" class="absolute top-0 left-0 border-right-1 m-0 p-0 "
-                    :style="{ 'height': (size / 2) + 'px', 'width': (size / 2) - 1 + 'px' }">
+    <div>
+        <!-- row : 행 10줄 : 1부터 시작 -->
+        <div v-for="i in 10" class="flex not_draggable" @contextmenu.prevent>
+            <!-- column : 열 9줄 : 1부터 시작 -->
+            <div v-for="j in 9" class="relative p-0 flex justify-content-center align-items-center"
+                :style="{ 'height': size + 'px', 'width': size + 'px' }">
+                <!-- 실제 기물의 위치 -->
+                <div v-if="board[i - 1][j - 1] != 0" class="z-4">
+                    <img :src="getPieceImageUrl(board[i - 1][j - 1])" class="z-4 cursor-pointer" :class="{
+                        'border-round border-3 border-green-300': isSelected(i - 1, j - 1),
+                        'border-round border-3 border-red-300': isLastMovde(i - 1, j - 1),
+                        'pointer-events-none': isOnTurn(i - 1, j - 1)
+                    }" :style="{ 'height': size * 0.9 + 'px', 'width': size * 0.9 + 'px' }"
+                        @click="pathFinding(i - 1, j - 1)" />
                 </div>
-                <div v-if="j != 9" class="absolute top-0 right-0 border-bottom-1 m-0 p-0"
-                    :style="{ 'height': (size / 2) + 'px', 'width': (size / 2) + 'px' }">
+                <!-- 움직일 수 있는 경로 선택 -->
+                <div v-if="isMoveAvailable(i - 1, j - 1)"
+                    class="absolute border-circle bg-green-200 border-1 border-green-600 z-5 shadow-2 cursor-pointer"
+                    :style="{ 'height': size / 4 + 'px', 'width': size / 4 + 'px' }" @click="move(i - 1, j - 1)">
                 </div>
-                <div v-if="j != 1" class="absolute bottom-0 left-0 border-top-1 m-0 p-0"
-                    :style="{ 'height': (size / 2) - 1 + 'px', 'width': (size / 2) + 'px' }">
+                <!-- 장기판 꾸미기 : 선, 대각선, 엑스표 -->
+                <div class="z-0">
+                    <div v-if="i != 1" class="absolute top-0 left-0 border-right-1 m-0 p-0 "
+                        :style="{ 'height': (size / 2) + 'px', 'width': (size / 2) - 1 + 'px' }">
+                    </div>
+                    <div v-if="j != 9" class="absolute top-0 right-0 border-bottom-1 m-0 p-0"
+                        :style="{ 'height': (size / 2) + 'px', 'width': (size / 2) + 'px' }">
+                    </div>
+                    <div v-if="j != 1" class="absolute bottom-0 left-0 border-top-1 m-0 p-0"
+                        :style="{ 'height': (size / 2) - 1 + 'px', 'width': (size / 2) + 'px' }">
+                    </div>
+                    <div v-if="i != 10" class="absolute bottom-0 right-0 border-left-1 m-0 p-0"
+                        :style="{ 'height': (size / 2) + 'px', 'width': (size / 2) + 'px' }">
+                    </div>
+                    <div v-if="cross_position(j, i)" class="absolute cross"></div>
+                    <div v-if="(j == 5 && i == 2) || (j == 5 && i == 9)" class="absolute bigCross" style="height: 50px;">
+                    </div>
                 </div>
-                <div v-if="i != 10" class="absolute bottom-0 right-0 border-left-1 m-0 p-0"
-                    :style="{ 'height': (size / 2) + 'px', 'width': (size / 2) + 'px' }">
-                </div>
-                <div v-if="cross_position(j, i)" class="absolute cross"></div>
-                <div v-if="(j == 5 && i == 2) || (j == 5 && i == 9)" class="absolute bigCross" style="height: 50px;"></div>
             </div>
         </div>
     </div>
@@ -47,14 +50,16 @@ const props = defineProps(['size'])
 const size = ref(props.size)
 const sizePixel = size.value * 2 + 'px'
 
+const pieceImages = ref()
 onMounted(() => {
     //console.log("mounted")
     getInitialBoard('blue')
+    pieceImages.value = import.meta.glob('../assets/janggi_pieces/*.svg')
 })
 
 // 기물 이미지 가져오기
-function getPieceImageUrl(num) {
-    const pieceImages = {
+const getPieceImageUrl = (num) => {
+    const pieceImagesList = {
         9: `../assets/janggi_pieces/blue_chariot.svg`,
         10: `../assets/janggi_pieces/blue_elephant.svg`,
         11: `../assets/janggi_pieces/blue_horse.svg`,
@@ -70,9 +75,9 @@ function getPieceImageUrl(num) {
         21: `../assets/janggi_pieces/red_king.svg`,
         23: `../assets/janggi_pieces/red_pawn.svg`,
     }
-
-    // console.log(URL(pieceImages[num], import.meta.url).href)
-    return new URL(pieceImages[num], import.meta.url).href;
+    // https://stackoverflow.com/questions/69696677/vite-vue-3-require-is-not-defined-when-using-image-source-as-props
+    // return new URL(pieceImagesList[num], import.meta.url).href;
+    return pieceImagesList[num]
 }
 
 // 엑스표 위치
