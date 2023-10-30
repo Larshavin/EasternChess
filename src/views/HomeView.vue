@@ -87,9 +87,11 @@ const getDiedPiece = (n) => {
     <!-- Korean Chess Map displayed -->
     <!-- 장기판 이미지 로딩 속도 느린 이슈 있음 -->
     <!-- background-image: url('board.jpg'); -->
-    <div class=" border-1 m-5 overflow-hidden" style="background-image: url('board.jpeg'); background-size: cover;"
+    <div class="relative border-1 m-5 overflow-hidden"
       :style="{ 'width': width_size + 'px', 'height': height_size + 'px' }">
       <KoreanChessMap @turn="(n) => turnChange(n)" @died="(n) => getDiedPiece(n)" :size="size" />
+      <img src="@/assets/board.jpeg" class="absolute top-0"
+        style="background-size: cover; width: 100%; height: 100%; z-index: -1;" />
     </div>
     <div>
       <div class="flex justify-content-center m-4">

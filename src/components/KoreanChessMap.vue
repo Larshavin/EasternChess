@@ -250,15 +250,16 @@ const isOnTurn = (i, j) => {
 
 // 선택한 기물의 움직일 수 있는 경로
 const availableMoves = ref(null)
+const printAvailableMoves = ref(null)
 
 // 선택한 기물의 움직일 수 있는 경로 확인
 const isMoveAvailable = (i, j) => {
-    if (availableMoves.value == null) {
+    if (printAvailableMoves.value == null) {
         return false
     }
     else {
-        for (const move in availableMoves.value) {
-            if (availableMoves.value[move][0] == i && availableMoves.value[move][1] == j) {
+        for (const move in printAvailableMoves.value) {
+            if (printAvailableMoves.value[move][0] == i && printAvailableMoves.value[move][1] == j) {
                 return true
             }
         }
@@ -266,47 +267,59 @@ const isMoveAvailable = (i, j) => {
     }
 }
 
+
+
 // 장기판 위의 좌표값을 확인하며 선택한 기물의 경로를 계산 
-const pathFinding = (i, j) => {
+// const pathFindingOption.value = 
+const pathFinding = (i, j, option) => {
     var delta
     availableMoves.value = null
 
     const num = board.value[i][j]
 
-    if (seletedPiece.value != null) {
-        if (seletedPiece.value[0] == i && seletedPiece.value[1] == j) {
-            seletedPiece.value = null
-            availableMoves.value = null
-            return
-        }
+    var selection
+    if (option == undefined) {
+        selection = true
+    } else {
+        selection = option
     }
-    seletedPiece.value = [i, j]
+    if (selection) {
+        if (seletedPiece.value != null) {
+            if (seletedPiece.value[0] == i && seletedPiece.value[1] == j) {
+                seletedPiece.value = null
+                availableMoves.value = null
+                printAvailableMoves.value = null
+                return
+            }
+        }
+        seletedPiece.value = [i, j]
+    }
 
     switch (num) {
         case 9: // 초나라 차
             delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
             getChariotMovement(i, j, delta)
-            return
+            break
         case 10: // 초나라 상
             delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
             getElephantMovement(i, j, delta)
-            return
+            break
         case 11: // 초나라 마
             delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
             getHorseMovement(i, j, delta)
-            return
+            break
         case 12: // 초나라 포
             delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
             getCannonMovement(i, j, delta)
-            return
+            break
         case 13: // 초나라 왕
             delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
             getKingMovement(i, j, delta)
-            return
+            break
         case 14: // 초나라 사
             delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
             getAdvisorMovement(i, j, delta)
-            return
+            break
         case 15: // 초나라 졸
             if (mySide == 8) {
                 delta = [[0, -1], [-1, 0], [0, 1]]
@@ -314,31 +327,31 @@ const pathFinding = (i, j) => {
                 delta = [[0, -1], [1, 0], [0, 1]]
             }
             getPawnMovement(i, j, delta)
-            return
+            break
         case 17: // 한나라 차
             delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
             getChariotMovement(i, j, delta)
-            return
+            break
         case 18: // 한나라 상
             delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
             getElephantMovement(i, j, delta)
-            return
+            break
         case 19: // 한나라 마
             delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
             getHorseMovement(i, j, delta)
-            return
+            break
         case 20: // 한나라 포
             delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
             getCannonMovement(i, j, delta)
-            return
+            break
         case 21: // 한나라 왕
             delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
             getKingMovement(i, j, delta)
-            return
+            break
         case 22: // 한나라 사
             delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
             getAdvisorMovement(i, j, delta)
-            return
+            break
         case 23: // 한나라 병
             if (mySide == 16) {
                 delta = [[0, -1], [-1, 0], [0, 1]]
@@ -346,10 +359,20 @@ const pathFinding = (i, j) => {
                 delta = [[0, -1], [1, 0], [0, 1]]
             }
             getPawnMovement(i, j, delta)
-            return
+            break
         default:
-            return
+            break
     }
+
+    if (!selection) {
+        console.log('in pathfinding :', availableMoves.value)
+        console.log(i, j, num)
+    }
+
+    if (selection) {
+        printAvailableMoves.value = JSON.parse(JSON.stringify(availableMoves.value))
+    }
+
 }
 
 const janggun = ref(false)
@@ -391,16 +414,44 @@ const move = (row, column) => {
     turn.value = turn.value == 8 ? 16 : 8
     emit('turn', turn.value)
 
-    // 장군 확인
-    if (!isKingSafe(row, column, true)) {
-        janggun.value = true
-        alert("장군입니다.")
+    // 장군 확인 : 적의 턴을 가정해서, 적 왕의 안전을 확인
+    if (!isKingSafe(seletedPiece.value[0], seletedPiece.value[1], row, column, true)) {
+        // check the Checkmate(외통수)
+        if (isCheckmate()) {
+            alert('게임 종료')
+        }
+        else {
+            janggun.value = true
+            alert("장군입니다.")
+        }
     }
 
     // 초기화
     seletedPiece.value = null
     availableMoves.value = null
+    printAvailableMoves.value = null
 }
+
+// 외통수 확인
+const isCheckmate = () => {
+    // 해당하는 턴의 아군 기물들을 경로를 모두 조사한 후, 움직일 경로가 없다면 외통수
+    // 1. 보드에서 해당 턴의 기물들을 모두 찾는다.
+    for (const i in board.value) {
+        for (const j in board.value[i]) {
+            if (board.value[i][j] != 0 && !isEnermy(board.value[i][j], turn.value, 5)) {
+                // 2. 기물의 경로를 조사한다.
+                pathFinding(Number(i), Number(j), false, true)
+                // 3. 경로가 있다면 외통수가 아니다.
+                // console.log(board.value[i][j], Number(i), Number(j), availableMoves.value.length, availableMoves.value)
+                if (availableMoves.value.length != 0) {
+                    return false
+                }
+            }
+        }
+    }
+    return true
+}
+
 
 // 졸병의 움직임 계산
 const getPawnMovement = (i, j, delta) => {
@@ -430,7 +481,7 @@ const getPawnMovement = (i, j, delta) => {
         }
         if (board.value[row][column] == 0 || isEnermy(board.value[row][column], board.value[i][j], 5)) {
             // 움직이기 전 왕이 안전한지 확인
-            if (isKingSafe(row, column)) {
+            if (isKingSafe(i, j, row, column)) {
                 availableMoves.value.push([row, column])
             }
         }
@@ -467,8 +518,10 @@ const movingInPalace = (i, j, delta) => {
             continue
         }
         if (board.value[row][column] == 0 || isEnermy(board.value[row][column], board.value[i][j], 5)) {
-            if (isKingSafe(row, column)) {
+
+            if (isKingSafe(i, j, row, column)) {
                 availableMoves.value.push([row, column])
+                console.log('check', row, column, availableMoves.value)
             }
         }
     }
@@ -501,7 +554,7 @@ const getHorseMovement = (i, j, delta) => {
                     continue
                 }
                 if (board.value[newRow][newColumn] == 0 || isEnermy(board.value[newRow][newColumn], board.value[i][j], 5)) {
-                    if (isKingSafe(newRow, newColumn)) {
+                    if (isKingSafe(i, j, newRow, newColumn)) {
                         availableMoves.value.push([newRow, newColumn])
                     }
                 }
@@ -544,7 +597,7 @@ const getElephantMovement = (i, j, delta) => {
                             continue
                         }
                         if (board.value[lastRow][lastColumn] == 0 || isEnermy(board.value[lastRow][lastColumn], board.value[i][j], 5)) {
-                            if (isKingSafe(lastRow, lastColumn)) {
+                            if (isKingSafe(i, j, lastRow, lastColumn)) {
                                 availableMoves.value.push([lastRow, lastColumn])
                             }
                         }
@@ -594,13 +647,13 @@ const forwarding = (i, j, delta, initial) => {
     }
 
     if (board.value[row][column] == 0) {
-        if (isKingSafe(row, column)) {
+        if (isKingSafe(i, j, row, column)) {
             availableMoves.value.push([row, column])
         }
         forwarding(row, column, delta, initial)
     }
     else if (isEnermy(board.value[row][column], initial, 5)) {
-        if (isKingSafe(row, column)) {
+        if (isKingSafe(i, j, row, column)) {
             availableMoves.value.push([row, column])
         }
     }
@@ -670,13 +723,13 @@ const jumping = (i, j, delta, initial) => {
     }
 
     if (board.value[row][column] == 0) {
-        if (isKingSafe(row, column)) {
+        if (isKingSafe(i, j, row, column)) {
             availableMoves.value.push([row, column])
         }
         jumping(row, column, delta, initial)
     }
     else if (isEnermy(board.value[row][column], initial, 5) && board.value[row][column] != 12 && board.value[row][column] != 20) {
-        if (isKingSafe(row, column)) {
+        if (isKingSafe(i, j, row, column)) {
             availableMoves.value.push([row, column])
         }
     }
@@ -698,7 +751,7 @@ function isEnermy(num1, num2, position) {
 // 잡히면 true, 아니면 false
 // 아군 차례일 때는 기물 움직임 전에 이 함수가 호출됨
 // 적의 차례일 때는 기물 움직임 이후에 이 함수가 호출됨
-const isKingSafe = (row, column, check) => {
+const isKingSafe = (i_origin, j_origin, row, column, check) => {
 
     if (check == undefined) {
         check = false
@@ -708,14 +761,13 @@ const isKingSafe = (row, column, check) => {
         var tempBoard = JSON.parse(JSON.stringify(board.value))
     } else {
         var tempBoard = JSON.parse(JSON.stringify(board.value))
-        tempBoard[row][column] = board.value[seletedPiece.value[0]][seletedPiece.value[1]]
-        tempBoard[seletedPiece.value[0]][seletedPiece.value[1]] = 0
+        tempBoard[row][column] = board.value[i_origin][j_origin]
+        tempBoard[i_origin][j_origin] = 0
     }
 
     if (turn.value == mySide) {
         var king
-        // 만약 선택한 기물이 왕이면
-        if (board.value[seletedPiece.value[0]][seletedPiece.value[1]] % 8 == 5) {
+        if (board.value[i_origin][j_origin] % 8 == 5) {
             king = [row, column]
         } else {
             king = kingPosition.value[0]
@@ -730,7 +782,7 @@ const isKingSafe = (row, column, check) => {
         return reversePathFinding(i, j, delta, tempBoard)
     }
     else {
-        if (board.value[seletedPiece.value[0]][seletedPiece.value[1]] % 8 == 5) {
+        if (board.value[i_origin][j_origin] % 8 == 5) {
             king = [row, column]
         } else {
             king = kingPosition.value[1]
@@ -800,10 +852,10 @@ const reversePawn = (i, j, delta, tempBoard) => {
         const piece = tempBoard[row][column] % 8
         //아랫쪽 궁 기준 delta 값이 [1,0], [1, -1], [1, 1]이 아닐 때, 적 졸병이 있으면 위험한 상황
         if (turn.value == 8 && piece == 7 && delta[0] != 1) {
-            console.log("danger!!! threat by pawn")
+            // console.log("danger!!! threat by pawn")
             return false
         } else if (turn.value == 16 && piece == 7 && delta[0] != -1) {
-            console.log("danger!!! threat by pawn")
+            // console.log("danger!!! threat by pawn")
             return false
         }
         return true
@@ -835,7 +887,7 @@ const reverseChariot = (i, j, delta, tempBoard) => {
         const piece = tempBoard[row][column] % 8
         // 경로 상에 상대방 차가 있으면 위험한 상황
         if (piece == 1) {
-            console.log("danger!!! threat by chariot")
+            // console.log("danger!!! threat by chariot")
             return false
         }
         return true
@@ -872,7 +924,7 @@ const reverseJumping = (i, j, delta, tempBoard) => {
     else if (isEnermy(tempBoard[row][column], 5 + turn.value, 5)) {
         const piece = tempBoard[row][column] % 8
         if (piece == 4) {
-            console.log("danger!!! threat by cannon")
+            // console.log("danger!!! threat by cannon")
             return false
         }
     }
