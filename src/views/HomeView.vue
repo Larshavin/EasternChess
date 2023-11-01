@@ -7,12 +7,20 @@
     - 개인 로그아웃 기능 ... (천천히) <br />
 
     <div>
-      <Button>매칭 찾기</Button>
-      <Button>혼자 두기</Button>
+      <Button @click="moveToPlay" class="mr-2">매칭 찾기</Button>
+      <!-- <Button>혼자 두기</Button> -->
     </div>
 
   </div>
 </template>
 
-<script>
+<script setup>
+// import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const moveToPlay = () => {
+  router.push({ name: 'KoreanChess' })
+}
+
 </script>

@@ -45,15 +45,16 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 
-const emit = defineEmits(['turn', 'died'])
-const props = defineProps(['size'])
+const emit = defineEmits(['turn', 'died', 'move'])
+const props = defineProps(['size', 'gameSetting', 'enemyMovement'])
+
 const size = ref(props.size)
 const sizePixel = size.value * 2 + 'px'
 
 const pieceImages = ref()
 onMounted(() => {
     //console.log("mounted")
-    getInitialBoard('blue')
+    getInitialBoard(props.gameSetting.side)
     pieceImages.value = import.meta.glob('../assets/janggi_pieces/*.svg')
 })
 
@@ -133,6 +134,58 @@ const board = ref(
     ]
 )
 
+// 상차림 정보가 들어왔을 때, 장기판 정보 변경
+const changeBoardPosition = (setting) => {
+    for (const key in setting.room.users) {
+        const user = setting.room.users[key]
+        if (user.Side == setting.side) {
+            if (user.formation == '마상상마') {
+                board.value[9][1] = 3 //
+                board.value[9][2] = 2
+                board.value[9][6] = 2
+                board.value[9][7] = 3
+            } else if (user.formation == '마상마상') {
+                board.value[9][1] = 3 //
+                board.value[9][2] = 2
+                board.value[9][6] = 3
+                board.value[9][7] = 2
+            } else if (user.formation == '상마상마') {
+                board.value[9][1] = 2 //
+                board.value[9][2] = 3
+                board.value[9][6] = 2
+                board.value[9][7] = 3
+            } else if (user.formation == '상마마상') {
+                board.value[9][1] = 2 //
+                board.value[9][2] = 3
+                board.value[9][6] = 3
+                board.value[9][7] = 2
+            }
+        } else {
+            if (user.formation == '마상상마') {
+                board.value[0][7] = 3 //
+                board.value[0][6] = 2
+                board.value[0][2] = 2
+                board.value[0][1] = 3
+            } else if (user.formation == '마상마상') {
+                board.value[0][7] = 3 //
+                board.value[0][6] = 2
+                board.value[0][2] = 3
+                board.value[0][1] = 2
+            } else if (user.formation == '상마상마') {
+                board.value[0][7] = 2 //
+                board.value[0][6] = 3
+                board.value[0][2] = 2
+                board.value[0][1] = 3
+            } else if (user.formation == '상마마상') {
+                board.value[0][7] = 2 //
+                board.value[0][6] = 3
+                board.value[0][2] = 3
+                board.value[0][1] = 2
+            }
+        }
+    }
+}
+
 const tempBoard = ref([])
 
 // 왕의 위치, 아군의 왕은 0번째 배열, 적의 왕은 1번째 배열
@@ -155,11 +208,14 @@ const palacePostionDelta = {
 }
 
 var mySide = null
+const side = ref(null)
 
 // 진영 결정에 따른 기물 정보 변경 : 초나라 +8, 한나라 +16
 const getInitialBoard = (color) => {
-    if (color == "blue") {
+    changeBoardPosition(props.gameSetting)
+    if (color == 8) {
         mySide = 8
+        side.value = 8
         for (var i in board.value) {
             if (i <= 3) {
                 for (var j in board.value[i]) {
@@ -179,6 +235,7 @@ const getInitialBoard = (color) => {
     }
     else {
         mySide = 16
+        side.value = 16
         for (var i in board.value) {
             if (i <= 3) {
                 for (var j in board.value[i]) {
@@ -235,7 +292,14 @@ const isLastMovde = (i, j) => {
 const turn = ref(8)
 
 // 선택한 위치의 기물이 턴에 맞는지 확인
+// 매칭 된 게임에서는, 턴이 넘어가도 적 기물을 클릭할 수 없음.
 const isOnTurn = (i, j) => {
+
+    if (board.value[i][j] - side.value < 0) {
+        console.log(i, j, board.value[i][j] - side.value)
+        return true
+    }
+
     if (turn.value == 8) {
         if (board.value[i][j] < 16) {
             return false // no 'pointer-events: none;' in css
@@ -272,8 +336,6 @@ const isMoveAvailable = (i, j) => {
         return false
     }
 }
-
-
 
 // 장기판 위의 좌표값을 확인하며 선택한 기물의 경로를 계산 
 // const pathFindingOption.value = 
@@ -396,6 +458,15 @@ const move = (row, column) => {
 
     // 마지막 움직임 지점 저장
     lastMove.value = [row, column]
+
+    const movement = {
+        previous: seletedPiece.value,
+        current: lastMove.value
+    }
+
+    if (turn.value == mySide) {
+        emit('move', movement)
+    }
 
     // 위험한 방식일 수도 있지만, 이미 클릭이 가능하다는 전제하에 이렇게 처리함. 
     // => 체크메이트 확인은 다른 곳에서 처리 (watch 등을 이용)
@@ -1010,6 +1081,11 @@ const reverseHorseAndElephant = (i, j, delta, tempBoard) => {
     }
     return true
 }
+
+defineExpose({
+    seletedPiece,
+    move,
+})
 
 </script>
 
