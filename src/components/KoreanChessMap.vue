@@ -516,7 +516,7 @@ const isCheckmate = () => {
     // 1. 보드에서 해당 턴의 기물들을 모두 찾는다.
     for (const i in board.value) {
         for (const j in board.value[i]) {
-            if (board.value[i][j] != 0 && !isEnermy(board.value[i][j], turn.value, 5)) {
+            if (board.value[i][j] != 0 && !isEnemy(board.value[i][j], turn.value, 5)) {
                 // 2. 기물의 경로를 조사한다.
                 pathFinding(Number(i), Number(j), false, true)
                 // 3. 경로가 있다면 외통수가 아니다.
@@ -557,7 +557,7 @@ const getPawnMovement = (i, j, delta) => {
         if (row < 0 || row > 9 || column < 0 || column > 8) {
             continue
         }
-        if (board.value[row][column] == 0 || isEnermy(board.value[row][column], board.value[i][j], 5)) {
+        if (board.value[row][column] == 0 || isEnemy(board.value[row][column], board.value[i][j], 5)) {
             // 움직이기 전 왕이 안전한지 확인
             if (isKingSafe(i, j, row, column)) {
                 availableMoves.value.push([row, column])
@@ -595,7 +595,7 @@ const movingInPalace = (i, j, delta) => {
         if ((turn.value != mySide) && (row < 0 || row > 2 || column < 3 || column > 5)) {
             continue
         }
-        if (board.value[row][column] == 0 || isEnermy(board.value[row][column], board.value[i][j], 5)) {
+        if (board.value[row][column] == 0 || isEnemy(board.value[row][column], board.value[i][j], 5)) {
 
             if (isKingSafe(i, j, row, column)) {
                 availableMoves.value.push([row, column])
@@ -631,7 +631,7 @@ const getHorseMovement = (i, j, delta) => {
                 if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
                     continue
                 }
-                if (board.value[newRow][newColumn] == 0 || isEnermy(board.value[newRow][newColumn], board.value[i][j], 5)) {
+                if (board.value[newRow][newColumn] == 0 || isEnemy(board.value[newRow][newColumn], board.value[i][j], 5)) {
                     if (isKingSafe(i, j, newRow, newColumn)) {
                         availableMoves.value.push([newRow, newColumn])
                     }
@@ -674,7 +674,7 @@ const getElephantMovement = (i, j, delta) => {
                         if (lastRow < 0 || lastRow > 9 || lastColumn < 0 || lastColumn > 8) {
                             continue
                         }
-                        if (board.value[lastRow][lastColumn] == 0 || isEnermy(board.value[lastRow][lastColumn], board.value[i][j], 5)) {
+                        if (board.value[lastRow][lastColumn] == 0 || isEnemy(board.value[lastRow][lastColumn], board.value[i][j], 5)) {
                             if (isKingSafe(i, j, lastRow, lastColumn)) {
                                 availableMoves.value.push([lastRow, lastColumn])
                             }
@@ -730,7 +730,7 @@ const forwarding = (i, j, delta, initial) => {
         }
         forwarding(row, column, delta, initial)
     }
-    else if (isEnermy(board.value[row][column], initial, 5)) {
+    else if (isEnemy(board.value[row][column], initial, 5)) {
         if (isKingSafe(i, j, row, column)) {
             availableMoves.value.push([row, column])
         }
@@ -808,7 +808,7 @@ const jumping = (i, j, delta, initial) => {
         }
         jumping(row, column, delta, initial)
     }
-    else if (isEnermy(board.value[row][column], initial[0], 5) && board.value[row][column] != 12 && board.value[row][column] != 20) {
+    else if (isEnemy(board.value[row][column], initial[0], 5) && board.value[row][column] != 12 && board.value[row][column] != 20) {
         if (isKingSafe(initial[1], initial[2], row, column)) {
             availableMoves.value.push([row, column])
         }
@@ -818,7 +818,7 @@ const jumping = (i, j, delta, initial) => {
 
 // 피아 식별을 위한 계산 함수 - 숫자의 2진수 앞 자리를 가지고 계산
 // 적이면 true, 아군이면 false
-function isEnermy(num1, num2, position) {
+function isEnemy(num1, num2, position) {
     // Convert numbers to binary strings with leading zeros
     const binary1 = num1.toString(2).padStart(position, '0');
     const binary2 = num2.toString(2).padStart(position, '0');
@@ -928,7 +928,7 @@ const reversePawn = (i, j, delta, tempBoard) => {
     }
     if (tempBoard[row][column] == 0) {
         return true
-    } else if (isEnermy(tempBoard[row][column], 5 + turn.value, 5)) {
+    } else if (isEnemy(tempBoard[row][column], 5 + turn.value, 5)) {
         const piece = tempBoard[row][column] % 8
         //아랫쪽 궁 기준 delta 값이 [1,0], [1, -1], [1, 1]이 아닐 때, 적 졸병이 있으면 위험한 상황
         if (turn.value == 8 && piece == 7 && delta[0] != 1) {
@@ -963,7 +963,7 @@ const reverseChariot = (i, j, delta, tempBoard) => {
             return false
         }
         return true
-    } else if (isEnermy(tempBoard[row][column], 5 + turn.value, 5)) {
+    } else if (isEnemy(tempBoard[row][column], 5 + turn.value, 5)) {
         const piece = tempBoard[row][column] % 8
         // 경로 상에 상대방 차가 있으면 위험한 상황
         if (piece == 1) {
@@ -1001,7 +1001,7 @@ const reverseJumping = (i, j, delta, tempBoard) => {
         }
         return false
     }
-    else if (isEnermy(tempBoard[row][column], 5 + turn.value, 5)) {
+    else if (isEnemy(tempBoard[row][column], 5 + turn.value, 5)) {
         const piece = tempBoard[row][column] % 8
         if (piece == 4) {
             console.log("danger!!! threat by cannon")
@@ -1026,7 +1026,7 @@ const reverseHorseAndElephant = (i, j, delta, tempBoard) => {
         if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
             return true
         }
-        if (isEnermy(tempBoard[newRow][newColumn], 5 + turn.value, 5)) {
+        if (isEnemy(tempBoard[newRow][newColumn], 5 + turn.value, 5)) {
             var piece = tempBoard[newRow][newColumn] % 8
             if (piece == 3) {
                 return false
@@ -1039,7 +1039,7 @@ const reverseHorseAndElephant = (i, j, delta, tempBoard) => {
         if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
             return true
         }
-        if (isEnermy(tempBoard[newRow][newColumn], 5 + turn.value, 5)) {
+        if (isEnemy(tempBoard[newRow][newColumn], 5 + turn.value, 5)) {
             piece = tempBoard[newRow][newColumn] % 8
             if (piece == 3) {
                 return false
@@ -1061,7 +1061,7 @@ const reverseHorseAndElephant = (i, j, delta, tempBoard) => {
             if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
                 return true
             }
-            if (isEnermy(tempBoard[newRow][newColumn], 5 + turn.value, 5)) {
+            if (isEnemy(tempBoard[newRow][newColumn], 5 + turn.value, 5)) {
                 piece = tempBoard[newRow][newColumn] % 8
                 if (piece == 2) {
                     return false
@@ -1074,7 +1074,7 @@ const reverseHorseAndElephant = (i, j, delta, tempBoard) => {
             if (newRow < 0 || newRow > 9 || newColumn < 0 || newColumn > 8) {
                 return true
             }
-            if (isEnermy(tempBoard[newRow][newColumn], 5 + turn.value, 5)) {
+            if (isEnemy(tempBoard[newRow][newColumn], 5 + turn.value, 5)) {
                 piece = tempBoard[newRow][newColumn] % 8
                 if (piece == 2) {
                     return false
