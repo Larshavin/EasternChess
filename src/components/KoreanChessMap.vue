@@ -295,13 +295,14 @@ const turn = ref(8)
 // 매칭 된 게임에서는, 턴이 넘어가도 적 기물을 클릭할 수 없음.
 const isOnTurn = (i, j) => {
 
-    if (board.value[i][j] - side.value < 0) {
-        console.log(i, j, board.value[i][j] - side.value)
-        return true
-    }
+    // if (side.value - board.value[i][j] > 8) {
+    //     console.log(side.value - board.value[i][j])
+    //     // console.log(i, j, board.value[i][j] - side.value)
+    //     return true
+    // }
 
     if (turn.value == 8) {
-        if (board.value[i][j] < 16) {
+        if (board.value[i][j] < 16 && side.value == turn.value) {
             return false // no 'pointer-events: none;' in css
         }
         else {
@@ -309,7 +310,7 @@ const isOnTurn = (i, j) => {
         }
     }
     else {
-        if (board.value[i][j] > 16) {
+        if (board.value[i][j] > 16 && side.value == turn.value) {
             return false
         }
         else {
@@ -740,7 +741,7 @@ const forwarding = (i, j, delta, initial) => {
 // 포의 움직임 계산
 const getCannonMovement = (i, j, delta) => {
     availableMoves.value = []
-    var initial = board.value[i][j]
+    var initial = [board.value[i][j], i, j]
 
     const key = '[' + i + ',' + j + ']'
     if (palacePostionDelta[key] != undefined) {
@@ -789,6 +790,7 @@ const checkBlock = (i, j, delta) => {
 
 // 포의 점프 확인 위한 재귀 함수
 const jumping = (i, j, delta, initial) => {
+
     const row = i + delta[0]
     const column = j + delta[1]
 
@@ -800,13 +802,14 @@ const jumping = (i, j, delta, initial) => {
     }
 
     if (board.value[row][column] == 0) {
-        if (isKingSafe(i, j, row, column)) {
+        console.log(row, column)
+        if (isKingSafe(initial[1], initial[2], row, column)) {
             availableMoves.value.push([row, column])
         }
         jumping(row, column, delta, initial)
     }
-    else if (isEnermy(board.value[row][column], initial, 5) && board.value[row][column] != 12 && board.value[row][column] != 20) {
-        if (isKingSafe(i, j, row, column)) {
+    else if (isEnermy(board.value[row][column], initial[0], 5) && board.value[row][column] != 12 && board.value[row][column] != 20) {
+        if (isKingSafe(initial[1], initial[2], row, column)) {
             availableMoves.value.push([row, column])
         }
     }
@@ -1001,7 +1004,7 @@ const reverseJumping = (i, j, delta, tempBoard) => {
     else if (isEnermy(tempBoard[row][column], 5 + turn.value, 5)) {
         const piece = tempBoard[row][column] % 8
         if (piece == 4) {
-            // console.log("danger!!! threat by cannon")
+            console.log("danger!!! threat by cannon")
             return false
         }
     }
